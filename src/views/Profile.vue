@@ -10,6 +10,31 @@
               <h5 class="mb-0"><i class="bi bi-person-circle"></i> 个人资料</h5>
             </div>
             <div class="card-body p-4">
+              <!-- 头像设置 -->
+              <div class="mb-4 text-center">
+                <div class="position-relative d-inline-block mb-3">
+                  <img 
+                    :src="user?.avatar || '/uploads/avatars/default.png'" 
+                    class="rounded-circle border" 
+                    style="width: 120px; height: 120px; object-fit: cover;"
+                    alt="User Avatar"
+                  >
+                  <label for="avatar-upload" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2 cursor-pointer" style="cursor: pointer;" title="更换头像">
+                    <i class="bi bi-camera-fill"></i>
+                  </label>
+                  <input 
+                    type="file" 
+                    id="avatar-upload" 
+                    class="d-none" 
+                    accept="image/*"
+                    @change="handleAvatarUpload"
+                  >
+                </div>
+                <p class="text-muted small">点击相机图标更换头像 (最大2MB)</p>
+              </div>
+
+              <hr />
+
               <!-- 基本信息 -->
               <div class="mb-4">
                 <h6 class="text-muted mb-3">基本信息</h6>
@@ -129,6 +154,39 @@ onMounted(() => {
     profileData.email = user.value.email || ''
   }
 })
+
+async function handleAvatarUpload(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // Validate file type and size
+  if (!file.type.startsWith('image/')) {
+    showToast('请选择图片文件', 'error')
+    return
+  }
+  
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('图片大小不能超过2MB', 'error')
+    return
+  }
+
+  const formData = new FormData()
+  formData.append('file', file)
+
+  try {
+    const result = await userApi.uploadAvatar(formData)
+    if (result && result.code === 200) {
+      showToast('头像上传成功', 'success')
+      // Update user store to reflect new avatar
+      await userStore.checkLoginStatus()
+    } else {
+      showToast(result?.message || '上传失败', 'error')
+    }
+  } catch (error) {
+    console.error('上传头像失败:', error)
+    showToast('上传失败', 'error')
+  }
+}
 
 async function updateProfile() {
   loading.value = true

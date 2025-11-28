@@ -54,3 +54,15 @@ export function truncateText(text, maxLength) {
   return text.substring(0, maxLength) + '...'
 }
 
+/**
+ * 格式化数字，最多保留两位小数
+ * @param {number|string} value - 数值
+ * @returns {string} 格式化后的数值
+ */
+export function formatNumber(value) {
+  if (value === undefined || value === null || value === '') return '0'
+  const num = parseFloat(value)
+  if (isNaN(num)) return '0'
+  return parseFloat(num.toFixed(2)).toString()
+}
+

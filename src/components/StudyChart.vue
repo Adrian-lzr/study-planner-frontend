@@ -28,23 +28,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, onMounted, watch, onUnmounted, toRefs } from 'vue'
 import * as echarts from 'echarts'
 
+const props = defineProps({
+  chartData: {
+    type: Object,
+    default: () => ({
+      week: { xAxis: [], series: [] },
+      month: { xAxis: [], series: [] }
+    })
+  }
+})
+
+const { chartData } = toRefs(props)
 const chartRef = ref(null)
 let chartInstance = null
 const period = ref('week') // 'week' or 'month'
-
-// 模拟数据 - 实际开发中应从 API 获取
-const weekData = {
-  xAxis: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
-  series: [2, 3.5, 1.5, 4, 3, 5, 2] // 每天学习时长(小时)
-}
-
-const monthData = {
-  xAxis: ['1日', '5日', '10日', '15日', '20日', '25日', '30日'],
-  series: [2, 4, 3, 5, 4, 6, 3] // 抽样展示或聚合数据
-}
 
 onMounted(() => {
   initChart()
@@ -58,9 +58,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 
-watch(period, () => {
+watch([period, chartData], () => {
   updateChart()
-})
+}, { deep: true })
 
 function initChart() {
   if (chartRef.value) {
@@ -79,7 +79,11 @@ function updateChart() {
   if (!chartInstance) return
 
   const isWeek = period.value === 'week'
-  const data = isWeek ? weekData : monthData
+  const data = isWeek ? chartData.value.week : chartData.value.month
+  
+  // 如果没有数据，显示空状态或默认坐标轴
+  const xAxisData = data?.xAxis?.length ? data.xAxis : []
+  const seriesData = data?.series?.length ? data.series : []
   
   const option = {
     tooltip: {
@@ -95,7 +99,7 @@ function updateChart() {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: data.xAxis
+      data: xAxisData
     },
     yAxis: {
       type: 'value',

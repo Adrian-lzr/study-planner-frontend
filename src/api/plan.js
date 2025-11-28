@@ -40,6 +40,15 @@ export const planApi = {
       url: `/plan/${planId}`,
       method: 'DELETE'
     })
-  }
+  },
+
+  // 更新计划
+  updatePlan(planId, data) {
+    return request({
+      url: `/plan/${planId}`,
+      method: 'PUT',
+      data
+    })
+  },
 }
 

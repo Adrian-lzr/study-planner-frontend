@@ -58,7 +58,7 @@
               <div class="d-flex justify-content-between align-items-center">
                 <div>
                   <p class="text-muted mb-1">总学习时长</p>
-                  <h3 class="mb-0">{{ (stats.totalHours || 0).toFixed(1) }} <small class="text-muted">h</small></h3>
+                  <h3 class="mb-0">{{ formatNumber(stats.totalHours) }} <small class="text-muted">h</small></h3>
                 </div>
                 <i class="bi bi-clock-history fs-1 text-info opacity-50"></i>
               </div>
@@ -70,7 +70,7 @@
       <!-- 学习进度图表 -->
       <div class="row mb-4">
         <div class="col-12">
-          <StudyChart />
+          <StudyChart :chart-data="chartData" />
         </div>
       </div>
 
@@ -89,7 +89,7 @@
                 </div>
                 <p class="mb-3">{{ todayTask.content }}</p>
                 <div class="d-flex align-items-center">
-                  <span class="me-3"><i class="bi bi-clock"></i> {{ todayTask.duration }}小时</span>
+                  <span class="me-3"><i class="bi bi-clock"></i> {{ formatNumber(todayTask.duration) }}小时</span>
                   <span v-if="todayTask.isCompleted" class="badge bg-success">
                     <i class="bi bi-check"></i> 已完成
                   </span>
@@ -154,7 +154,7 @@
                   <div>
                     <h6 class="mb-1">{{ plan.title }}</h6>
                     <small class="text-muted">
-                      {{ plan.startDate }} ~ {{ plan.endDate }} | 每天{{ plan.dailyHours }}小时
+                      {{ plan.startDate }} ~ {{ plan.endDate }} | 每天{{ formatNumber(plan.dailyHours) }}小时
                     </small>
                   </div>
                   <span
@@ -183,6 +183,7 @@ import { useUserStore } from '../stores/user'
 import { planApi } from '../api/plan'
 import { checkinApi } from '../api/checkin'
 import { showToast } from '../utils/toast'
+import { formatNumber } from '../utils/format'
 
 const userStore = useUserStore()
 const user = computed(() => userStore.user)
@@ -192,6 +193,11 @@ const stats = ref({})
 const todayTask = ref(null)
 const plans = ref([])
 const currentPlanId = ref(null)
+// 添加 chartData 响应式变量
+const chartData = ref({
+  week: { xAxis: [], series: [] },
+  month: { xAxis: [], series: [] }
+})
 
 onMounted(() => {
   loadDashboard()
@@ -205,6 +211,12 @@ async function loadDashboard() {
     const statsResult = await checkinApi.getStats()
     if (statsResult && statsResult.code === 200) {
       stats.value = statsResult.data || {}
+    }
+
+    // 加载图表数据
+    const chartResult = await checkinApi.getChartData()
+    if (chartResult && chartResult.code === 200) {
+      chartData.value = chartResult.data
     }
 
     // 加载计划列表

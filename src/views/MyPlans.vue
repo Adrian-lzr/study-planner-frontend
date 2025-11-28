@@ -40,12 +40,12 @@
               </div>
               <p class="card-text text-muted small">
                 <i class="bi bi-calendar"></i> {{ formatDate(plan.createTime) }}
-                <span class="ms-2"><i class="bi bi-clock"></i> {{ plan.duration || plan.totalDays || 0 }}天</span>
+                <span class="ms-2"><i class="bi bi-clock"></i> {{ formatNumber(plan.duration || plan.totalDays || 0) }}天</span>
               </p>
               <div class="mb-3">
                 <div class="d-flex justify-content-between small mb-1">
                   <span>学习进度</span>
-                  <span>{{ plan.progress || 0 }}%</span>
+                  <span>{{ formatNumber(plan.progress || 0) }}%</span>
                 </div>
                 <div class="progress">
                   <div class="progress-bar bg-success" :style="{ width: (plan.progress || 0) + '%' }"></div>
@@ -57,10 +57,39 @@
               <button class="btn btn-sm btn-outline-primary me-2" @click="viewDetail(plan.id)">
                 <i class="bi bi-eye"></i> 查看详情
               </button>
+              <button class="btn btn-sm btn-outline-secondary me-2" @click="openEditModal(plan)">
+                <i class="bi bi-pencil"></i> 编辑
+              </button>
               <button class="btn btn-sm btn-outline-danger" @click="deletePlan(plan.id)">
                 <i class="bi bi-trash"></i> 删除
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editPlanModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">编辑计划</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="planTitle" class="form-label">计划名称</label>
+              <input type="text" class="form-control" id="planTitle" v-model="editingPlan.title">
+            </div>
+            <div class="mb-3">
+              <label for="planGoal" class="form-label">学习目标</label>
+              <textarea class="form-control" id="planGoal" rows="3" v-model="editingPlan.goal"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" @click="savePlan">保存</button>
           </div>
         </div>
       </div>
@@ -73,19 +102,47 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Modal } from 'bootstrap'
 import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
 import { planApi } from '../api/plan'
 import { showToast } from '../utils/toast'
-import { formatDate, truncateText } from '../utils/format'
+import { formatDate, truncateText, formatNumber } from '../utils/format'
 
 const router = useRouter()
 const loading = ref(true)
 const plans = ref([])
+const editingPlan = ref({ id: null, title: '', goal: '' })
+let editModalInstance = null
 
 onMounted(() => {
   loadPlans()
+  editModalInstance = new Modal(document.getElementById('editPlanModal'))
 })
+
+function openEditModal(plan) {
+  editingPlan.value = { ...plan }
+  editModalInstance.show()
+}
+
+async function savePlan() {
+  try {
+    const result = await planApi.updatePlan(editingPlan.value.id, {
+      title: editingPlan.value.title,
+      goal: editingPlan.value.goal
+    })
+    if (result && result.code === 200) {
+      showToast('计划更新成功', 'success')
+      editModalInstance.hide()
+      loadPlans()
+    } else {
+      showToast(result?.message || '更新失败', 'error')
+    }
+  } catch (error) {
+    console.error('更新失败:', error)
+    showToast('更新失败', 'error')
+  }
+}
 
 async function loadPlans() {
   loading.value = true

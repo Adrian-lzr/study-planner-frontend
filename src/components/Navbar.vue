@@ -29,19 +29,29 @@
         </ul>
         <ul class="navbar-nav">
           <template v-if="isLoggedIn">
-            <li class="nav-item dropdown">
+            <li class="nav-item dropdown" ref="dropdownRef">
               <a
-                class="nav-link dropdown-toggle"
+                class="nav-link dropdown-toggle d-flex align-items-center"
                 href="#"
                 id="userDropdown"
                 role="button"
-                data-bs-toggle="dropdown"
+                @click.prevent="toggleDropdown"
+                :class="{ show: isDropdownOpen }"
+                aria-expanded="false"
               >
-                <i class="bi bi-person-circle"></i> {{ user.username }}
+                <img 
+                  v-if="user?.avatar" 
+                  :src="user.avatar" 
+                  class="rounded-circle me-2" 
+                  style="width: 24px; height: 24px; object-fit: cover;"
+                  alt="Avatar"
+                >
+                <i v-else class="bi bi-person-circle me-1"></i> 
+                {{ user?.username }}
               </a>
-              <ul class="dropdown-menu dropdown-menu-end">
+              <ul class="dropdown-menu dropdown-menu-end" :class="{ show: isDropdownOpen }">
                 <li>
-                  <router-link class="dropdown-item" to="/profile">
+                  <router-link class="dropdown-item" to="/profile" @click="isDropdownOpen = false">
                     <i class="bi bi-person"></i> 个人资料
                   </router-link>
                 </li>
@@ -69,7 +79,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 
@@ -79,7 +89,29 @@ const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const user = computed(() => userStore.user)
 
+const isDropdownOpen = ref(false)
+const dropdownRef = ref(null)
+
+function toggleDropdown() {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+function closeDropdown(e) {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target)) {
+    isDropdownOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeDropdown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeDropdown)
+})
+
 async function handleLogout() {
+  isDropdownOpen.value = false
   await userStore.logout()
   router.push('/')
 }
