@@ -1,8 +1,8 @@
 <template>
-  <div>
+  <div class="d-flex flex-column min-vh-100">
     <Navbar />
     
-    <div class="container my-5">
+    <div class="container my-5 flex-grow-1">
       <!-- 页面标题 -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-journal-text"></i> 我的学习计划</h2>
@@ -204,4 +204,3 @@ async function deletePlan(planId) {
   }
 }
 </script>
-
