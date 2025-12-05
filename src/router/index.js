@@ -48,6 +48,50 @@ const router = createRouter({
       name: 'profile',
       component: () => import('../views/Profile.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/forum',
+      name: 'forum',
+      component: () => import('../views/Forum/ForumHome.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/forum/question/:id',
+      name: 'question-detail',
+      component: () => import('../views/Forum/QuestionDetail.vue')
+    },
+    {
+      path: '/forum/ask',
+      name: 'ask-question',
+      component: () => import('../views/Forum/AskQuestion.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/forum/topic/:id',
+      name: 'topic',
+      component: () => import('../views/Forum/TopicPage.vue')
+    },
+    {
+      path: '/forum/user/:id',
+      name: 'user-profile',
+      component: () => import('../views/Forum/UserProfile.vue')
+    },
+    {
+      path: '/forum/search',
+      name: 'search',
+      component: () => import('../views/Forum/SearchPage.vue')
+    },
+    {
+      path: '/forum/my-content',
+      name: 'my-content',
+      component: () => import('../views/Forum/MyContent.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/chat',
+      name: 'chat',
+      component: () => import('../views/Chat.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })

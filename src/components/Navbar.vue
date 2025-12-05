@@ -14,6 +14,9 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <router-link class="nav-link" to="/forum">论坛</router-link>
+          </li>
           <li v-if="isLoggedIn" class="nav-item">
             <router-link class="nav-link" to="/dashboard">仪表盘</router-link>
           </li>
@@ -25,6 +28,11 @@
           </li>
           <li v-if="isLoggedIn" class="nav-item">
             <router-link class="nav-link" to="/ai-assistant">AI助手</router-link>
+          </li>
+          <li v-if="isLoggedIn" class="nav-item">
+            <router-link class="nav-link" to="/chat">
+              <i class="bi bi-chat-dots"></i> 聊天室
+            </router-link>
           </li>
         </ul>
         <ul class="navbar-nav">
@@ -43,6 +51,11 @@
                 <li>
                   <router-link class="dropdown-item" to="/profile">
                     <i class="bi bi-person"></i> 个人资料
+                  </router-link>
+                </li>
+                <li>
+                  <router-link class="dropdown-item" to="/forum/my-content">
+                    <i class="bi bi-file-text"></i> 我的内容
                   </router-link>
                 </li>
                 <li><hr class="dropdown-divider" /></li>
