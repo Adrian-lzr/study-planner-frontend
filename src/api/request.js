@@ -5,7 +5,7 @@ import { showToast } from '../utils/toast'
 // 创建 axios 实例
 const request = axios.create({
   baseURL: '/api', // Vite 会代理到后端
-  timeout: 30000,
+  timeout: 120000, // 延长超时时间到 2 分钟，适应 LLM 生成
   withCredentials: true, // 携带 cookie
   headers: {
     'Content-Type': 'application/json',

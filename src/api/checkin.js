@@ -27,6 +27,14 @@ export const checkinApi = {
     })
   },
 
+  // 获取图表数据
+  getChartData() {
+    return request({
+      url: '/checkin/chart-data',
+      method: 'GET'
+    })
+  },
+
   // 获取打卡记录
   getHistory(params) {
     return request({
