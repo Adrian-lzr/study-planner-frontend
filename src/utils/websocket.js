@@ -1,77 +1,121 @@
+import { Client } from '@stomp/stompjs'
+import SockJS from 'sockjs-client'
 import { showToast } from './toast'
 
 class WebSocketManager {
   constructor() {
-    this.ws = null
+    this.client = null
+    this.subscription = null // 订阅对象
     this.reconnectAttempts = 0
     this.maxReconnectAttempts = 5
     this.reconnectDelay = 3000
     this.listeners = new Map()
     this.isConnecting = false
     this.isConnected = false
+    this.lastSentMessage = null // 最后发送的消息key（防重复）
   }
 
   // 连接WebSocket
   connect(token) {
-    if (this.isConnecting || (this.isConnected && this.ws?.readyState === WebSocket.OPEN)) {
+    if (this.isConnecting || (this.isConnected && this.client?.connected)) {
       return
     }
 
     this.isConnecting = true
     
     // 构建WebSocket URL
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const wsProtocol = window.location.protocol === 'https:' ? 'https:' : 'http:'
     const wsHost = import.meta.env.VITE_WS_URL || window.location.host
-    const wsUrl = `${wsProtocol}//${wsHost}/api/chat/ws?token=${token}`
+    // 使用 SockJS，它会自动处理协议
+    let wsUrl = `${wsProtocol}//${wsHost}/api/chat/ws`
+    
+    // 如果有 token，添加到 URL
+    if (token) {
+      wsUrl += `?token=${token}`
+    }
 
     try {
-      this.ws = new WebSocket(wsUrl)
-
-      this.ws.onopen = () => {
-        console.log('WebSocket连接成功')
-        this.isConnected = true
-        this.isConnecting = false
-        this.reconnectAttempts = 0
-        this.emit('connected')
-      }
-
-      this.ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          this.handleMessage(data)
-        } catch (error) {
-          console.error('解析消息失败:', error)
-        }
-      }
-
-      this.ws.onerror = (error) => {
-        console.error('WebSocket错误:', error)
-        this.isConnecting = false
-        this.emit('error', error)
-      }
-
-      this.ws.onclose = () => {
-        console.log('WebSocket连接关闭')
-        this.isConnected = false
-        this.isConnecting = false
-        this.emit('disconnected')
-        
-        // 自动重连
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.reconnectAttempts++
+      // 创建 STOMP 客户端
+      this.client = new Client({
+        webSocketFactory: () => new SockJS(wsUrl),
+        reconnectDelay: this.reconnectDelay,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+        onConnect: (frame) => {
+          console.log('WebSocket连接成功', frame)
+          this.isConnected = true
+          this.isConnecting = false
+          this.reconnectAttempts = 0
+          
+          // 先订阅消息，再触发 connected 事件
+          this.subscribeToMessages()
+          
+          // 延迟一点触发 connected，确保订阅已完成
           setTimeout(() => {
-            console.log(`尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
-            this.connect(token)
-          }, this.reconnectDelay)
-        } else {
-          showToast('连接失败，请刷新页面重试', 'error')
+            this.emit('connected')
+          }, 100)
+        },
+        onStompError: (frame) => {
+          console.error('STOMP错误:', frame)
+          this.isConnecting = false
+          this.emit('error', frame)
+        },
+        onWebSocketClose: () => {
+          console.log('WebSocket连接关闭')
+          this.isConnected = false
+          this.isConnecting = false
+          this.emit('disconnected')
+        },
+        onDisconnect: () => {
+          console.log('STOMP断开连接')
+          this.isConnected = false
+          this.isConnecting = false
+          
+          // 自动重连
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++
+            setTimeout(() => {
+              console.log(`尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
+              this.connect(token)
+            }, this.reconnectDelay)
+          } else {
+            showToast('连接失败，请刷新页面重试', 'error')
+          }
         }
-      }
+      })
+
+      // 激活客户端
+      this.client.activate()
     } catch (error) {
       console.error('WebSocket连接失败:', error)
       this.isConnecting = false
       showToast('连接失败', 'error')
     }
+  }
+
+  // 订阅消息（防止重复订阅）
+  subscribeToMessages() {
+    if (!this.client || !this.client.connected) {
+      return
+    }
+
+    // 检查是否已经订阅过
+    if (this.subscription) {
+      console.log('已经订阅过消息，跳过重复订阅')
+      return
+    }
+
+    // 订阅聊天消息
+    this.subscription = this.client.subscribe('/topic/chat', (message) => {
+      try {
+        const data = JSON.parse(message.body)
+        this.handleMessage(data)
+      } catch (error) {
+        console.error('解析消息失败:', error)
+      }
+    })
+
+    console.log('已订阅 /topic/chat')
   }
 
   // 处理接收到的消息
@@ -105,10 +149,18 @@ class WebSocketManager {
     }
   }
 
-  // 发送消息
+  // 发送消息（防止重复发送）
   sendMessage(content) {
-    if (!this.isConnected || this.ws?.readyState !== WebSocket.OPEN) {
+    if (!this.isConnected || !this.client?.connected) {
       showToast('连接未建立，请稍后重试', 'warning')
+      return false
+    }
+
+    // 防止重复发送（使用消息内容+时间戳作为key）
+    const trimmedContent = content.trim()
+    const messageKey = trimmedContent + '_' + Math.floor(Date.now() / 1000) // 使用秒级时间戳
+    if (this.lastSentMessage === messageKey) {
+      console.log('检测到重复发送，跳过:', trimmedContent)
       return false
     }
 
@@ -116,10 +168,25 @@ class WebSocketManager {
       const message = {
         type: 'message',
         payload: {
-          content: content.trim()
+          content: trimmedContent
         }
       }
-      this.ws.send(JSON.stringify(message))
+      
+      // 发送到 /app/chat/message（对应后端的 @MessageMapping("/chat/message")）
+      this.client.publish({
+        destination: '/app/chat/message',
+        body: JSON.stringify(message)
+      })
+      
+      // 记录最后发送的消息（2秒内相同内容不重复发送）
+      this.lastSentMessage = messageKey
+      setTimeout(() => {
+        if (this.lastSentMessage === messageKey) {
+          this.lastSentMessage = null
+        }
+      }, 2000)
+      
+      console.log('消息已发送:', trimmedContent)
       return true
     } catch (error) {
       console.error('发送消息失败:', error)
@@ -162,22 +229,29 @@ class WebSocketManager {
 
   // 断开连接
   disconnect() {
-    if (this.ws) {
-      this.ws.close()
-      this.ws = null
+    // 取消订阅
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+      this.subscription = null
+    }
+    
+    if (this.client) {
+      this.client.deactivate()
+      this.client = null
     }
     this.isConnected = false
     this.isConnecting = false
     this.listeners.clear()
     this.reconnectAttempts = this.maxReconnectAttempts // 阻止自动重连
+    this.lastSentMessage = null // 清除最后发送的消息记录
   }
 
   // 获取连接状态
   getStatus() {
     return {
-      isConnected: this.isConnected,
+      isConnected: this.isConnected && this.client?.connected,
       isConnecting: this.isConnecting,
-      readyState: this.ws?.readyState
+      readyState: this.client?.connected ? 1 : 0
     }
   }
 }

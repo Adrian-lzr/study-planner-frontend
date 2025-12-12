@@ -66,3 +66,33 @@ export function formatNumber(value) {
   return parseFloat(num.toFixed(2)).toString()
 }
 
+/**
+ * 格式化时间（相对时间）
+ * @param {string} dateString - 日期时间字符串
+ * @returns {string} 格式化后的时间（相对时间或绝对时间）
+ */
+export function formatTime(dateString) {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = Math.floor((now - date) / 1000 / 60) // 分钟差
+
+  if (diff < 1) {
+    return '刚刚'
+  } else if (diff < 60) {
+    return `${diff}分钟前`
+  } else if (diff < 1440) { // 24小时内
+    return date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } else {
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+}
+

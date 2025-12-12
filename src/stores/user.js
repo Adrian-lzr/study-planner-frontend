@@ -1,11 +1,21 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { userApi } from '../api/user'
 
 export const useUserStore = defineStore('user', () => {
   const user = ref(null)
 
   const isLoggedIn = computed(() => user.value !== null)
+  
+  // 监听用户变化，通知聊天室重新连接
+  watch(user, (newUser, oldUser) => {
+    // 如果用户从登录状态变为未登录，或者用户ID发生变化，需要重新连接WebSocket
+    if (oldUser && newUser && oldUser.id !== newUser.id) {
+      console.log('用户切换，需要重新连接WebSocket: ', oldUser.id, ' -> ', newUser.id)
+      // 触发自定义事件，让聊天室知道需要重新连接
+      window.dispatchEvent(new CustomEvent('user-changed', { detail: { oldUser, newUser } }))
+    }
+  })
 
   // 检查登录状态
   async function checkLoginStatus() {
@@ -69,11 +79,17 @@ export const useUserStore = defineStore('user', () => {
       console.error('登出请求失败:', error)
     }
     
+    const oldUser = user.value
     // 清除本地状态
     user.value = null
     localStorage.removeItem('user')
     localStorage.removeItem('token')
     localStorage.removeItem('aiChatHistory')
+    
+    // 通知聊天室用户已登出
+    if (oldUser) {
+      window.dispatchEvent(new CustomEvent('user-logged-out'))
+    }
   }
 
   return {
