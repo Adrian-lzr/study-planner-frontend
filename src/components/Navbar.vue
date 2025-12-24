@@ -37,7 +37,7 @@
         </ul>
         <ul class="navbar-nav">
           <template v-if="isLoggedIn">
-            <li class="nav-item dropdown" ref="dropdownRef">
+            <li class="nav-item dropdown" ref="dropdownRef" style="position: relative; z-index: 1050;">
               <a
                 class="nav-link dropdown-toggle d-flex align-items-center"
                 href="#"

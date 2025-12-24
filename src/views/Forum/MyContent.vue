@@ -62,11 +62,48 @@
               </div>
             </div>
             <div v-else>
-              <QuestionCard 
+              <div 
                 v-for="question in forumStore.myQuestions" 
                 :key="question.id"
-                :question="question"
-              />
+                class="card mb-3"
+              >
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <h5 class="card-title mb-2">
+                        <router-link :to="`/forum/question/${question.id}`" class="text-decoration-none">
+                          {{ question.title }}
+                        </router-link>
+                      </h5>
+                      <p class="card-text text-muted mb-2" v-if="question.content">
+                        {{ truncateContent(question.content) }}
+                      </p>
+                      <div class="d-flex align-items-center text-muted small">
+                        <span class="me-3">
+                          <i class="bi bi-clock"></i>
+                          {{ formatTime(question.created_at) }}
+                        </span>
+                        <span class="me-3">
+                          <i class="bi bi-chat-dots"></i>
+                          {{ question.answer_count || 0 }} 回答
+                        </span>
+                        <span>
+                          <i class="bi bi-eye"></i>
+                          {{ question.view_count || 0 }} 浏览
+                        </span>
+                      </div>
+                    </div>
+                    <div class="ms-3">
+                      <button 
+                        class="btn btn-sm btn-outline-danger"
+                        @click="deleteQuestion(question.id)"
+                      >
+                        <i class="bi bi-trash"></i> 删除
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -104,12 +141,14 @@
                     </div>
                     <div>
                       <button 
+                        v-if="answer.author_id === userStore.user?.id"
                         class="btn btn-sm btn-outline-primary me-2"
                         @click="editAnswer(answer)"
                       >
                         编辑
                       </button>
                       <button 
+                        v-if="answer.author_id === userStore.user?.id"
                         class="btn btn-sm btn-outline-danger"
                         @click="deleteAnswer(answer.id)"
                       >
@@ -220,12 +259,14 @@ import Navbar from '../../components/Navbar.vue'
 import Footer from '../../components/Footer.vue'
 import { renderMarkdown } from '../../utils/markdown'
 import { useForumStore } from '../../stores/forum'
-import { interactionApi, answerApi } from '../../api/forum'
+import { useUserStore } from '../../stores/user'
+import { interactionApi, answerApi, questionApi } from '../../api/forum'
 import { formatTime } from '../../utils/format'
 import { showToast } from '../../utils/toast'
 import QuestionCard from '../../components/Forum/QuestionCard.vue'
 
 const forumStore = useForumStore()
+const userStore = useUserStore()
 
 const activeTab = ref('questions')
 const loading = ref(false)
@@ -242,7 +283,9 @@ async function loadContent() {
   loading.value = true
   try {
     if (activeTab.value === 'questions') {
+      console.log('加载我的提问，当前用户:', userStore.user)
       await forumStore.fetchMyQuestions()
+      console.log('我的提问加载完成，数量:', forumStore.myQuestions.length)
     } else if (activeTab.value === 'answers') {
       await forumStore.fetchMyAnswers()
     } else if (activeTab.value === 'collections') {
@@ -250,6 +293,8 @@ async function loadContent() {
     } else if (activeTab.value === 'following') {
       await loadFollowing()
     }
+  } catch (error) {
+    console.error('加载内容失败:', error)
   } finally {
     loading.value = false
   }
@@ -274,8 +319,7 @@ function switchTab(tab) {
 function truncateContent(content) {
   if (!content) return ''
   const text = content.replace(/[#*`\[\]()]/g, '').trim()
-  const truncated = text.length > 200 ? text.substring(0, 200) + '...' : text
-  return renderMarkdown(truncated)
+  return text.length > 200 ? text.substring(0, 200) + '...' : text
 }
 
 function editAnswer(answer) {
@@ -303,6 +347,23 @@ async function deleteAnswer(answerId) {
 async function removeCollection(collectionId) {
   // 这里需要调用取消收藏的API
   showToast('功能开发中', 'info')
+}
+
+async function deleteQuestion(questionId) {
+  if (!confirm('确定要删除这个问题吗？删除后无法恢复。')) return
+  
+  try {
+    const response = await questionApi.deleteQuestion(questionId)
+    if (response.code === 200) {
+      showToast('删除成功', 'success')
+      await forumStore.fetchMyQuestions()
+    } else {
+      showToast(response.message || '删除失败', 'error')
+    }
+  } catch (error) {
+    console.error('删除失败:', error)
+    showToast('删除失败', 'error')
+  }
 }
 </script>
 

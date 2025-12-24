@@ -16,6 +16,10 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   config => {
+    // 如果是 FormData，让 axios 自动设置 Content-Type（包括 boundary）
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+    }
     return config
   },
   error => {
