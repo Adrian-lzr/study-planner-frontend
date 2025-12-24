@@ -66,7 +66,7 @@
 
         <!-- 右侧边栏 -->
         <div class="col-lg-4">
-          <div class="sticky-top" style="top: 20px;">
+          <div class="sticky-top" style="top: 20px; z-index: 100;">
             <!-- 热门话题 -->
             <div class="card mb-3">
               <div class="card-header">
@@ -125,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onActivated } from 'vue'
 import Navbar from '../../components/Navbar.vue'
 import Footer from '../../components/Footer.vue'
 import { useForumStore } from '../../stores/forum'
@@ -146,7 +146,25 @@ const stats = ref({
 onMounted(() => {
   loadQuestions()
   loadHotTopics()
+  
+  // 监听问题创建事件，自动刷新列表
+  window.addEventListener('forum-question-created', () => {
+    loadQuestions()
+    loadHotTopics()
+  })
+  
+  // 监听话题更新事件
+  window.addEventListener('topic-updated', () => {
+    loadHotTopics()
+  })
 })
+
+// 当页面激活时刷新（从其他页面返回时，如果使用了keep-alive）
+onActivated(() => {
+  loadQuestions()
+  loadHotTopics()
+})
+
 
 function switchTab(tab) {
   activeTab.value = tab

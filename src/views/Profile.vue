@@ -13,13 +13,21 @@
               <!-- 头像设置 -->
               <div class="mb-4 text-center">
                 <div class="position-relative d-inline-block mb-3">
+                  <div 
+                    v-if="!user?.avatar" 
+                    class="rounded-circle border d-flex align-items-center justify-content-center bg-light"
+                    style="width: 120px; height: 120px; border: 2px solid #dee2e6 !important;"
+                  >
+                    <i class="bi bi-person-circle" style="font-size: 80px; color: #6c757d;"></i>
+                  </div>
                   <img 
-                    :src="user?.avatar || '/uploads/avatars/default.png'" 
+                    v-else
+                    :src="user.avatar" 
                     class="rounded-circle border" 
-                    style="width: 120px; height: 120px; object-fit: cover;"
+                    style="width: 120px; height: 120px; object-fit: cover; border: 2px solid #dee2e6 !important;"
                     alt="User Avatar"
                   >
-                  <label for="avatar-upload" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2 cursor-pointer" style="cursor: pointer;" title="更换头像">
+                  <label for="avatar-upload" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2 cursor-pointer shadow-sm" style="cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" title="更换头像">
                     <i class="bi bi-camera-fill"></i>
                   </label>
                   <input 
@@ -27,11 +35,19 @@
                     id="avatar-upload" 
                     class="d-none" 
                     accept="image/*"
-                    @change="handleAvatarUpload"
+                    @change="handleAvatarSelect"
                   >
                 </div>
-                <p class="text-muted small">点击相机图标更换头像 (最大2MB)</p>
+                <p class="text-muted small">点击相机图标更换头像 (支持裁剪和压缩，最大5MB)</p>
               </div>
+              
+              <!-- 头像裁剪组件 -->
+              <AvatarCropper 
+                :show="showCropper"
+                :imageSrc="cropperImageSrc"
+                @confirm="handleCropperConfirm"
+                @cancel="showCropper = false"
+              />
 
               <hr />
 
@@ -176,6 +192,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
+import AvatarCropper from '../components/AvatarCropper.vue'
 import { useUserStore } from '../stores/user'
 import { userApi } from '../api/user'
 import { settingsApi } from '../api/settings'
@@ -188,6 +205,8 @@ const user = computed(() => userStore.user)
 const loading = ref(false)
 const passwordLoading = ref(false)
 const settingsLoading = ref(false)
+const showCropper = ref(false)
+const cropperImageSrc = ref('')
 
 const profileData = reactive({
   email: ''
@@ -253,36 +272,187 @@ async function updateSettings() {
   }
 }
 
-async function handleAvatarUpload(event) {
+/**
+ * 压缩图片
+ * @param {File} file - 原始图片文件
+ * @param {number} maxWidth - 最大宽度
+ * @param {number} maxHeight - 最大高度
+ * @param {number} quality - 图片质量 (0-1)
+ * @returns {Promise<Blob>} 压缩后的图片blob
+ */
+function compressImage(file, maxWidth = 2000, maxHeight = 2000, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        // 计算新尺寸
+        let width = img.width
+        let height = img.height
+        
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          } else {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+        
+        // 创建canvas进行压缩
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        // 转换为blob
+        canvas.toBlob((blob) => {
+          if (blob) {
+            console.log('图片压缩完成:', {
+              原始大小: (file.size / 1024).toFixed(2) + ' KB',
+              压缩后大小: (blob.size / 1024).toFixed(2) + ' KB',
+              压缩率: ((1 - blob.size / file.size) * 100).toFixed(1) + '%'
+            })
+            resolve(blob)
+          } else {
+            reject(new Error('图片压缩失败'))
+          }
+        }, file.type || 'image/jpeg', quality)
+      }
+      img.onerror = () => reject(new Error('图片加载失败'))
+      img.src = e.target.result
+    }
+    reader.onerror = () => reject(new Error('文件读取失败'))
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
+ * 处理头像选择
+ */
+async function handleAvatarSelect(event) {
   const file = event.target.files[0]
   if (!file) return
 
-  // Validate file type and size
+  // 验证文件类型
   if (!file.type.startsWith('image/')) {
-    showToast('请选择图片文件', 'error')
+    showToast('请选择图片文件（JPG、PNG、GIF等）', 'error')
+    event.target.value = ''
     return
   }
   
-  if (file.size > 2 * 1024 * 1024) {
-    showToast('图片大小不能超过2MB', 'error')
+  // 验证文件大小（5MB限制）
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  if (file.size > maxSize) {
+    showToast('图片大小不能超过5MB', 'error')
+    event.target.value = ''
     return
   }
 
-  const formData = new FormData()
-  formData.append('file', file)
+  try {
+    showToast('正在处理图片...', 'info')
+    
+    // 如果图片大于1MB，先进行压缩
+    let processedFile = file
+    if (file.size > 1024 * 1024) {
+      console.log('图片较大，开始压缩...')
+      const compressedBlob = await compressImage(file, 2000, 2000, 0.85)
+      processedFile = new File([compressedBlob], file.name, { type: compressedBlob.type })
+    }
+    
+    // 创建预览URL并显示裁剪器
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      cropperImageSrc.value = e.target.result
+      showCropper.value = true
+      showToast('请调整裁剪区域（1:1比例）', 'info')
+    }
+    reader.onerror = () => {
+      showToast('图片读取失败', 'error')
+    }
+    reader.readAsDataURL(processedFile)
+    
+  } catch (error) {
+    console.error('处理图片失败:', error)
+    showToast('图片处理失败: ' + error.message, 'error')
+  } finally {
+    // 重置input
+    event.target.value = ''
+  }
+}
 
+/**
+ * 处理裁剪确认 - 上传裁剪后的头像到数据库
+ * @param {Blob} blob - 裁剪后的图片blob（200x200像素，1:1比例，JPEG格式）
+ */
+async function handleCropperConfirm(blob) {
+  if (!blob) {
+    console.error('No blob received from cropper')
+    showToast('裁剪失败，请重试', 'error')
+    return
+  }
+  
+  console.log('收到裁剪后的图片:', {
+    size: blob.size,
+    type: blob.type,
+    sizeKB: (blob.size / 1024).toFixed(2) + ' KB'
+  })
+  
+  showCropper.value = false
+  showToast('正在上传头像...', 'info')
+  
+  // 创建FormData
+  const formData = new FormData()
+  const fileName = `avatar_${Date.now()}.jpg`
+  formData.append('file', blob, fileName)
+  
   try {
     const result = await userApi.uploadAvatar(formData)
+    console.log('上传结果:', result)
+    
     if (result && result.code === 200) {
-      showToast('头像上传成功', 'success')
-      // Update user store to reflect new avatar
+      showToast('头像上传成功！', 'success')
+      
+      // 更新用户信息以显示新头像
+      // 后端返回的 result.data 应该是 User 对象，包含更新后的 avatar URL
+      if (result.data) {
+        // 直接更新 userStore.user（因为 user 是 computed，会自动更新）
+        if (result.data.avatar) {
+          // 如果返回的是User对象，使用avatar字段
+          userStore.user = { ...userStore.user, avatar: result.data.avatar }
+        } else if (result.data.id) {
+          // 如果返回的是完整的User对象
+          userStore.user = result.data
+        }
+        
+        // 同时保存到 localStorage 保持同步
+        localStorage.setItem('user', JSON.stringify(userStore.user))
+        
+        console.log('头像更新成功，当前用户信息:', userStore.user)
+      }
+      
+      // 重新获取用户信息确保与数据库同步
       await userStore.checkLoginStatus()
+      
     } else {
-      showToast(result?.message || '上传失败', 'error')
+      const errorMsg = result?.message || '上传失败'
+      console.error('上传失败:', errorMsg)
+      showToast(errorMsg, 'error')
     }
   } catch (error) {
     console.error('上传头像失败:', error)
-    showToast('上传失败', 'error')
+    console.error('错误详情:', error.response || error.message)
+    
+    let errorMessage = '上传失败'
+    if (error.response) {
+      errorMessage = error.response.data?.message || `服务器错误: ${error.response.status}`
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    showToast(errorMessage, 'error')
   }
 }
 

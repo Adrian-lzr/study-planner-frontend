@@ -54,19 +54,26 @@
                 <!-- 话题/标签 -->
                 <div class="mb-3">
                   <label class="form-label">选择话题</label>
-                  <div class="d-flex flex-wrap gap-2 mb-2">
+                  <div class="d-flex flex-wrap gap-2 mb-2" v-if="selectedTopics.length > 0">
                     <span 
                       v-for="topic in selectedTopics" 
                       :key="topic.id"
-                      class="badge bg-primary d-flex align-items-center"
+                      class="badge bg-primary d-flex align-items-center gap-1 px-3 py-2"
+                      style="font-size: 0.9rem;"
                     >
+                      <i class="bi bi-check-circle-fill"></i>
                       {{ topic.name }}
                       <button 
                         type="button"
-                        class="btn-close btn-close-white ms-2"
+                        class="btn-close btn-close-white ms-1"
+                        style="font-size: 0.7rem;"
                         @click="removeTopic(topic.id)"
+                        aria-label="移除"
                       ></button>
                     </span>
+                  </div>
+                  <div v-else class="text-muted small mb-2">
+                    <i class="bi bi-info-circle"></i> 暂未选择话题，可从下方热门话题中选择或手动添加
                   </div>
                   <div class="input-group">
                     <input 
@@ -85,16 +92,20 @@
                     </button>
                   </div>
                   <div class="mt-2">
-                    <small class="text-muted">热门话题：</small>
+                    <small class="text-muted">热门话题（点击选择）：</small>
                     <div class="d-flex flex-wrap gap-1 mt-1">
                       <button 
                         type="button"
-                        class="btn btn-sm btn-outline-primary"
+                        class="btn btn-sm"
+                        :class="selectedTopics.find(t => t.id === topic.id) ? 'btn-primary' : 'btn-outline-primary'"
                         v-for="topic in hotTopics"
                         :key="topic.id"
                         @click="selectTopic(topic)"
-                        v-if="!selectedTopics.find(t => t.id === topic.id)"
                       >
+                        <i 
+                          class="bi"
+                          :class="selectedTopics.find(t => t.id === topic.id) ? 'bi-check-circle-fill' : 'bi-circle'"
+                        ></i>
                         {{ topic.name }}
                       </button>
                     </div>
@@ -158,6 +169,7 @@ import Footer from '../../components/Footer.vue'
 import { renderMarkdown } from '../../utils/markdown'
 import { useForumStore } from '../../stores/forum'
 import { showToast } from '../../utils/toast'
+import { topicApi } from '../../api/forum'
 
 const router = useRouter()
 const forumStore = useForumStore()
@@ -190,34 +202,78 @@ async function loadHotTopics() {
 }
 
 function selectTopic(topic) {
-  if (!selectedTopics.value.find(t => t.id === topic.id)) {
+  const existing = selectedTopics.value.find(t => t.id === topic.id)
+  if (existing) {
+    // 如果已选择，则取消选择
+    removeTopic(topic.id)
+    showToast(`已取消选择话题：${topic.name}`, 'info')
+  } else {
+    // 如果未选择，则添加
     selectedTopics.value.push(topic)
+    showToast(`已选择话题：${topic.name}`, 'success')
   }
 }
 
-function addTopic() {
+async function addTopic() {
   const name = topicInput.value.trim()
-  if (!name) return
+  if (!name) {
+    showToast('请输入话题名称', 'warning')
+    return
+  }
   
-  // 检查是否已存在
+  // 检查是否已在已选列表中
   if (selectedTopics.value.find(t => t.name === name)) {
     showToast('该话题已添加', 'warning')
     topicInput.value = ''
     return
   }
   
-  // 创建新话题对象（实际应该调用API创建）
-  selectedTopics.value.push({
-    id: Date.now(), // 临时ID
-    name: name,
-    follow_count: 0
-  })
-  
-  topicInput.value = ''
+  try {
+    // 调用API创建或获取话题
+    const response = await topicApi.createTopic({ name, description: '' })
+    if (response.code === 200 && response.data) {
+      // 检查是否已存在（可能API返回了已存在的话题）
+      const existing = selectedTopics.value.find(t => t.id === response.data.id)
+      if (!existing) {
+        selectedTopics.value.push(response.data)
+        showToast(`话题"${name}"添加成功`, 'success')
+      } else {
+        showToast('该话题已添加', 'warning')
+      }
+      topicInput.value = ''
+      // 刷新热门话题列表
+      loadHotTopics()
+    } else {
+      // 处理业务错误
+      const errorMsg = response.message || '添加话题失败'
+      if (errorMsg.includes('已存在')) {
+        showToast('该话题已存在，请从热门话题中选择', 'warning')
+      } else {
+        showToast(errorMsg, 'error')
+      }
+    }
+  } catch (error) {
+    console.error('添加话题失败:', error)
+    // 处理网络错误或异常
+    if (error.response?.data?.message) {
+      const errorMsg = error.response.data.message
+      if (errorMsg.includes('已存在') || errorMsg.includes('Duplicate')) {
+        showToast('该话题已存在，请从热门话题中选择', 'warning')
+      } else {
+        showToast(errorMsg, 'error')
+      }
+    } else {
+      showToast('添加话题失败：' + (error.message || '网络错误'), 'error')
+    }
+  }
 }
 
 function removeTopic(topicId) {
+  const topic = selectedTopics.value.find(t => t.id === topicId)
   selectedTopics.value = selectedTopics.value.filter(t => t.id !== topicId)
+  if (topic) {
+    showToast(`已移除话题：${topic.name}`, 'info')
+  }
 }
 
 function saveDraft() {
@@ -264,8 +320,12 @@ async function submitQuestion() {
     if (result) {
       // 清除草稿
       localStorage.removeItem('question_draft')
+      showToast('问题发布成功', 'success')
       // 跳转到问题详情页
-      router.push(`/forum/question/${result.id}`)
+      router.push(`/forum/question/${result.id}`).then(() => {
+        // 触发论坛首页刷新（通过事件或直接调用）
+        window.dispatchEvent(new CustomEvent('forum-question-created'))
+      })
     }
   } finally {
     submitting.value = false

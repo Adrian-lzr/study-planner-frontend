@@ -235,6 +235,12 @@ onMounted(() => {
   loadAnswers()
 })
 
+// 监听路由变化，重新加载数据
+watch(() => route.params.id, () => {
+  loadQuestion()
+  loadAnswers()
+})
+
 watch(() => route.params.id, () => {
   loadQuestion()
   loadAnswers()
@@ -300,12 +306,16 @@ function handleEditAnswer(answer) {
 }
 
 async function handleDeleteAnswer(answerId) {
+  if (!confirm('确定要删除这条回答吗？')) return
+  
   try {
     const { answerApi } = await import('../../api/forum')
     const response = await answerApi.deleteAnswer(answerId)
     if (response.code === 200) {
       showToast('删除成功', 'success')
-      loadAnswers()
+      // 重新加载回答列表和问题详情（更新回答数）
+      await loadAnswers()
+      await loadQuestion()
     } else {
       showToast(response.message || '删除失败', 'error')
     }

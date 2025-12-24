@@ -204,6 +204,15 @@ export const topicApi = {
       url: '/forum/topic/hot',
       method: 'get'
     })
+  },
+  
+  // 创建话题
+  createTopic(data) {
+    return request({
+      url: '/forum/topic',
+      method: 'post',
+      data
+    })
   }
 }
 

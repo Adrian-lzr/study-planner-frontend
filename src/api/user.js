@@ -58,10 +58,8 @@ export const userApi = {
     return request({
       url: '/user/avatar',
       method: 'POST',
-      data: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+      data: formData
+      // 不设置 Content-Type，让 axios 自动处理 FormData（包括 boundary）
     })
   }
 }

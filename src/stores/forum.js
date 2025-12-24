@@ -70,9 +70,16 @@ export const useForumStore = defineStore('forum', () => {
   async function createQuestion(data) {
     try {
       loading.value = true
+      // 处理话题：过滤掉临时ID（大于1000000000000的可能是Date.now()生成的）
+      if (data.topic_ids && Array.isArray(data.topic_ids)) {
+        data.topic_ids = data.topic_ids.filter(tid => tid && tid < 1000000000000)
+      }
+      
       const response = await questionApi.createQuestion(data)
       if (response.code === 200) {
         showToast('问题发布成功', 'success')
+        // 刷新问题列表
+        await fetchQuestions()
         return response.data
       } else {
         showToast(response.message || '发布问题失败', 'error')
@@ -267,20 +274,28 @@ export const useForumStore = defineStore('forum', () => {
   async function fetchMyQuestions(params = {}) {
     try {
       loading.value = true
+      console.log('开始获取我的提问，参数:', params)
       const response = await interactionApi.getMyQuestions(params)
+      console.log('获取我的提问响应:', response)
       if (response.code === 200) {
         myQuestions.value = response.data || []
+        console.log('我的提问数量:', myQuestions.value.length)
         return response.data
       } else {
+        console.error('获取我的提问失败:', response.message)
         showToast(response.message || '获取失败', 'error')
+        myQuestions.value = []
         return []
       }
     } catch (error) {
-      console.error('获取失败:', error)
-      showToast('获取失败', 'error')
+      console.error('获取我的提问异常:', error)
+      console.error('错误详情:', error.response || error.message)
+      showToast('获取失败: ' + (error.message || '网络错误'), 'error')
+      myQuestions.value = []
       return []
     } finally {
       loading.value = false
+      console.log('获取我的提问完成，loading设置为false')
     }
   }
 
