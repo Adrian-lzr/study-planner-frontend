@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { wsManager } from '../utils/websocket'
 import { useUserStore } from './user'
 import { showToast } from '../utils/toast'
+import i18n from '../i18n'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
@@ -35,7 +36,7 @@ export const useChatStore = defineStore('chat', () => {
   // 初始化WebSocket连接
   function initConnection() {
     if (!userStore.isLoggedIn) {
-      showToast('请先登录', 'warning')
+      showToast(i18n.global.t('auth.loginRequired'), 'warning')
       return
     }
 
@@ -69,7 +70,7 @@ export const useChatStore = defineStore('chat', () => {
     // 监听连接状态
     eventListeners.connected = async () => {
       isConnected.value = true
-      showToast('已连接到聊天室', 'success')
+      showToast(i18n.global.t('chat.connected'), 'success')
       // 连接成功后加载历史消息
       await loadHistoryMessages()
     }
@@ -95,7 +96,7 @@ export const useChatStore = defineStore('chat', () => {
     // 监听用户加入
     eventListeners.user_joined = (userData) => {
       if (userData.user_id !== userStore.user?.id) {
-        showToast(`${userData.username} 加入了聊天室`, 'info')
+        showToast(i18n.global.t('chat.userJoined', { username: userData.username }), 'info')
       }
       updateOnlineUsers(userData.users || [])
     }
@@ -104,7 +105,7 @@ export const useChatStore = defineStore('chat', () => {
     // 监听用户离开
     eventListeners.user_left = (userData) => {
       if (userData.user_id !== userStore.user?.id) {
-        showToast(`${userData.username} 离开了聊天室`, 'info')
+        showToast(i18n.global.t('chat.userLeft', { username: userData.username }), 'info')
       }
       updateOnlineUsers(userData.users || [])
     }
@@ -203,7 +204,7 @@ export const useChatStore = defineStore('chat', () => {
     }
 
     if (!isConnected.value) {
-      showToast('连接未建立，请稍后重试', 'warning')
+      showToast(i18n.global.t('chat.connectionNotEstablished'), 'warning')
       return false
     }
 

@@ -7,13 +7,13 @@
             <div class="card-body p-5">
               <div class="text-center mb-4">
                 <h2><i class="bi bi-book text-primary"></i></h2>
-                <h4>登录</h4>
-                <p class="text-muted">欢迎回来！</p>
+                <h4>{{ $t('auth.login.title') }}</h4>
+                <p class="text-muted">{{ $t('auth.login.welcome') }}</p>
               </div>
 
               <form @submit.prevent="handleLogin">
                 <div class="mb-3">
-                  <label for="username" class="form-label">用户名</label>
+                  <label for="username" class="form-label">{{ $t('auth.login.username') }}</label>
                   <input
                     type="text"
                     class="form-control"
@@ -23,7 +23,7 @@
                   />
                 </div>
                 <div class="mb-3">
-                  <label for="password" class="form-label">密码</label>
+                  <label for="password" class="form-label">{{ $t('auth.login.password') }}</label>
                   <input
                     type="password"
                     class="form-control"
@@ -35,7 +35,7 @@
                 <div class="d-grid">
                   <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
                     <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-                    登录
+                    {{ $t('auth.login.submit') }}
                   </button>
                 </div>
               </form>
@@ -43,14 +43,14 @@
               <hr class="my-4" />
 
               <p class="text-center mb-0">
-                还没有账号？<router-link to="/register">立即注册</router-link>
+                {{ $t('auth.login.noAccount') }}<router-link to="/register">{{ $t('auth.login.registerNow') }}</router-link>
               </p>
             </div>
           </div>
 
           <div class="text-center mt-3">
             <router-link to="/" class="text-muted">
-              <i class="bi bi-arrow-left"></i> 返回首页
+              <i class="bi bi-arrow-left"></i> {{ $t('common.back') }}
             </router-link>
           </div>
         </div>
@@ -62,8 +62,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '../stores/user'
 import { showToast } from '../utils/toast'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -80,7 +83,7 @@ async function handleLogin() {
     const result = await userStore.login(username.value, password.value)
     
     if (result.success) {
-      showToast('登录成功！', 'success')
+      showToast(t('auth.loginSuccess'), 'success')
       
       // 检查是否有重定向URL
       const redirect = route.query.redirect
@@ -92,7 +95,7 @@ async function handleLogin() {
         }
       }, 500)
     } else {
-      showToast(result.message || '登录失败', 'error')
+      showToast(result.message || t('errors.unknown'), 'error')
     }
   } finally {
     loading.value = false

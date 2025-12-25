@@ -7,7 +7,7 @@
         <div class="col-md-8">
           <div class="card shadow">
             <div class="card-header bg-primary text-white">
-              <h5 class="mb-0"><i class="bi bi-person-circle"></i> 个人资料</h5>
+              <h5 class="mb-0"><i class="bi bi-person-circle"></i> {{ $t('profile.title') }}</h5>
             </div>
             <div class="card-body p-4">
               <!-- 头像设置 -->
@@ -38,7 +38,7 @@
                     @change="handleAvatarSelect"
                   >
                 </div>
-                <p class="text-muted small">点击相机图标更换头像 (支持裁剪和压缩，最大5MB)</p>
+                <p class="text-muted small">{{ $t('profile.changeAvatarHint') }}</p>
               </div>
               
               <!-- 头像裁剪组件 -->
@@ -53,21 +53,21 @@
 
               <!-- 基本信息 -->
               <div class="mb-4">
-                <h6 class="text-muted mb-3">基本信息</h6>
+                <h6 class="text-muted mb-3">{{ $t('profile.basicInfo') }}</h6>
                 <div class="row mb-3">
-                  <label class="col-sm-3 col-form-label">用户名</label>
+                  <label class="col-sm-3 col-form-label">{{ $t('profile.username') }}</label>
                   <div class="col-sm-9">
                     <input type="text" class="form-control" :value="user?.username" disabled />
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label class="col-sm-3 col-form-label">邮箱</label>
+                  <label class="col-sm-3 col-form-label">{{ $t('profile.email') }}</label>
                   <div class="col-sm-9">
                     <input type="email" class="form-control" v-model="profileData.email" />
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label class="col-sm-3 col-form-label">注册时间</label>
+                  <label class="col-sm-3 col-form-label">{{ $t('profile.registerTime') }}</label>
                   <div class="col-sm-9">
                     <input type="text" class="form-control" :value="formatDateTime(user?.createTime)" disabled />
                   </div>
@@ -76,7 +76,7 @@
                   <button class="btn btn-primary" @click="updateProfile" :disabled="loading">
                     <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                     <i v-else class="bi bi-check"></i>
-                    保存修改
+                    {{ $t('profile.saveChanges') }}
                   </button>
                 </div>
               </div>
@@ -85,9 +85,9 @@
 
               <!-- 提醒设置 -->
               <div class="mb-4">
-                <h6 class="text-muted mb-3"><i class="bi bi-bell"></i> 提醒设置</h6>
+                <h6 class="text-muted mb-3"><i class="bi bi-bell"></i> {{ $t('profile.reminderSettings') }}</h6>
                 <div class="row mb-3">
-                  <label class="col-sm-3 col-form-label">闲置时间阈值</label>
+                  <label class="col-sm-3 col-form-label">{{ $t('profile.inactiveThreshold') }}</label>
                   <div class="col-sm-9">
                     <div class="input-group">
                       <input 
@@ -96,15 +96,15 @@
                         v-model.number="settingsData.inactiveMinutes"
                         min="1"
                         max="10080"
-                        placeholder="分钟"
+                        :placeholder="$t('profile.minutes')"
                       />
-                      <span class="input-group-text">分钟</span>
+                      <span class="input-group-text">{{ $t('profile.minutes') }}</span>
                     </div>
-                    <small class="text-muted">超过此时间未打卡算闲置（1-10080分钟，即1分钟到7天）</small>
+                    <small class="text-muted">{{ $t('profile.inactiveThresholdHint') }}</small>
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label class="col-sm-3 col-form-label">提醒间隔</label>
+                  <label class="col-sm-3 col-form-label">{{ $t('profile.reminderInterval') }}</label>
                   <div class="col-sm-9">
                     <div class="input-group">
                       <input 
@@ -113,18 +113,18 @@
                         v-model.number="settingsData.reminderIntervalMinutes"
                         min="1"
                         max="10080"
-                        placeholder="分钟"
+                        :placeholder="$t('profile.minutes')"
                       />
-                      <span class="input-group-text">分钟</span>
+                      <span class="input-group-text">{{ $t('profile.minutes') }}</span>
                     </div>
-                    <small class="text-muted">闲置后每隔多久提醒一次（1-10080分钟，即1分钟到7天）</small>
+                    <small class="text-muted">{{ $t('profile.reminderIntervalDesc') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
                   <button class="btn btn-primary" @click="updateSettings" :disabled="settingsLoading">
                     <span v-if="settingsLoading" class="spinner-border spinner-border-sm me-2"></span>
                     <i v-else class="bi bi-check"></i>
-                    保存设置
+                    {{ $t('profile.saveSettings') }}
                   </button>
                 </div>
               </div>
@@ -133,10 +133,10 @@
 
               <!-- 修改密码 -->
               <div class="mb-4">
-                <h6 class="text-muted mb-3">修改密码</h6>
+                <h6 class="text-muted mb-3">{{ $t('profile.changePassword') }}</h6>
                 <form @submit.prevent="changePassword">
                   <div class="row mb-3">
-                    <label class="col-sm-3 col-form-label">原密码</label>
+                    <label class="col-sm-3 col-form-label">{{ $t('profile.oldPassword') }}</label>
                     <div class="col-sm-9">
                       <input
                         type="password"
@@ -147,7 +147,7 @@
                     </div>
                   </div>
                   <div class="row mb-3">
-                    <label class="col-sm-3 col-form-label">新密码</label>
+                    <label class="col-sm-3 col-form-label">{{ $t('profile.newPassword') }}</label>
                     <div class="col-sm-9">
                       <input
                         type="password"
@@ -159,7 +159,7 @@
                     </div>
                   </div>
                   <div class="row mb-3">
-                    <label class="col-sm-3 col-form-label">确认新密码</label>
+                    <label class="col-sm-3 col-form-label">{{ $t('profile.confirmPassword') }}</label>
                     <div class="col-sm-9">
                       <input
                         type="password"
@@ -173,7 +173,7 @@
                     <button type="submit" class="btn btn-warning" :disabled="passwordLoading">
                       <span v-if="passwordLoading" class="spinner-border spinner-border-sm me-2"></span>
                       <i v-else class="bi bi-key"></i>
-                      修改密码
+                      {{ $t('profile.changePassword') }}
                     </button>
                   </div>
                 </form>
@@ -190,6 +190,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
 import AvatarCropper from '../components/AvatarCropper.vue'
@@ -199,6 +200,7 @@ import { settingsApi } from '../api/settings'
 import { showToast } from '../utils/toast'
 import { formatDateTime } from '../utils/format'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const user = computed(() => userStore.user)
 
@@ -244,11 +246,11 @@ async function loadSettings() {
 
 async function updateSettings() {
   if (!settingsData.inactiveMinutes || settingsData.inactiveMinutes < 1 || settingsData.inactiveMinutes > 10080) {
-    showToast('闲置时间必须在1-10080分钟之间', 'error')
+    showToast(t('profile.inactiveThresholdRange'), 'error')
     return
   }
   if (!settingsData.reminderIntervalMinutes || settingsData.reminderIntervalMinutes < 1 || settingsData.reminderIntervalMinutes > 10080) {
-    showToast('提醒间隔必须在1-10080分钟之间', 'error')
+    showToast(t('profile.reminderIntervalRange'), 'error')
     return
   }
 
@@ -260,13 +262,13 @@ async function updateSettings() {
       reminderIntervalMinutes: settingsData.reminderIntervalMinutes
     })
     if (result && result.code === 200) {
-      showToast('设置更新成功', 'success')
+      showToast(t('profile.settingsUpdateSuccess'), 'success')
     } else {
-      showToast(result?.message || '更新失败', 'error')
+      showToast(result?.message || t('profile.updateFailed'), 'error')
     }
   } catch (error) {
     console.error('更新设置失败:', error)
-    showToast('更新失败', 'error')
+    showToast(t('profile.updateFailed'), 'error')
   } finally {
     settingsLoading.value = false
   }
@@ -338,7 +340,7 @@ async function handleAvatarSelect(event) {
 
   // 验证文件类型
   if (!file.type.startsWith('image/')) {
-    showToast('请选择图片文件（JPG、PNG、GIF等）', 'error')
+    showToast(t('profile.pleaseSelectImage'), 'error')
     event.target.value = ''
     return
   }
@@ -346,13 +348,13 @@ async function handleAvatarSelect(event) {
   // 验证文件大小（5MB限制）
   const maxSize = 5 * 1024 * 1024 // 5MB
   if (file.size > maxSize) {
-    showToast('图片大小不能超过5MB', 'error')
+    showToast(t('profile.imageSizeExceeded'), 'error')
     event.target.value = ''
     return
   }
 
   try {
-    showToast('正在处理图片...', 'info')
+    showToast(t('profile.processingImage'), 'info')
     
     // 如果图片大于1MB，先进行压缩
     let processedFile = file
@@ -367,16 +369,16 @@ async function handleAvatarSelect(event) {
     reader.onload = (e) => {
       cropperImageSrc.value = e.target.result
       showCropper.value = true
-      showToast('请调整裁剪区域（1:1比例）', 'info')
+      showToast(t('profile.adjustCropArea'), 'info')
     }
     reader.onerror = () => {
-      showToast('图片读取失败', 'error')
+      showToast(t('profile.imageReadFailed'), 'error')
     }
     reader.readAsDataURL(processedFile)
     
   } catch (error) {
     console.error('处理图片失败:', error)
-    showToast('图片处理失败: ' + error.message, 'error')
+    showToast(t('profile.imageProcessFailed') + ': ' + error.message, 'error')
   } finally {
     // 重置input
     event.target.value = ''
@@ -390,7 +392,7 @@ async function handleAvatarSelect(event) {
 async function handleCropperConfirm(blob) {
   if (!blob) {
     console.error('No blob received from cropper')
-    showToast('裁剪失败，请重试', 'error')
+    showToast(t('profile.cropFailed'), 'error')
     return
   }
   
@@ -401,7 +403,7 @@ async function handleCropperConfirm(blob) {
   })
   
   showCropper.value = false
-  showToast('正在上传头像...', 'info')
+  showToast(t('profile.uploadingAvatar'), 'info')
   
   // 创建FormData
   const formData = new FormData()
@@ -413,7 +415,7 @@ async function handleCropperConfirm(blob) {
     console.log('上传结果:', result)
     
     if (result && result.code === 200) {
-      showToast('头像上传成功！', 'success')
+      showToast(t('profile.avatarUploadSuccess'), 'success')
       
       // 更新用户信息以显示新头像
       // 后端返回的 result.data 应该是 User 对象，包含更新后的 avatar URL
@@ -437,7 +439,7 @@ async function handleCropperConfirm(blob) {
       await userStore.checkLoginStatus()
       
     } else {
-      const errorMsg = result?.message || '上传失败'
+      const errorMsg = result?.message || t('profile.uploadFailed')
       console.error('上传失败:', errorMsg)
       showToast(errorMsg, 'error')
     }
@@ -445,7 +447,7 @@ async function handleCropperConfirm(blob) {
     console.error('上传头像失败:', error)
     console.error('错误详情:', error.response || error.message)
     
-    let errorMessage = '上传失败'
+    let errorMessage = t('profile.uploadFailed')
     if (error.response) {
       errorMessage = error.response.data?.message || `服务器错误: ${error.response.status}`
     } else if (error.message) {
@@ -462,14 +464,14 @@ async function updateProfile() {
   try {
     const result = await userApi.updateProfile(profileData)
     if (result && result.code === 200) {
-      showToast('资料更新成功', 'success')
+      showToast(t('profile.profileUpdateSuccess'), 'success')
       await userStore.checkLoginStatus()
     } else {
-      showToast(result?.message || '更新失败', 'error')
+      showToast(result?.message || t('profile.updateFailed'), 'error')
     }
   } catch (error) {
     console.error('更新资料失败:', error)
-    showToast('更新失败', 'error')
+    showToast(t('profile.updateFailed'), 'error')
   } finally {
     loading.value = false
   }
@@ -477,7 +479,7 @@ async function updateProfile() {
 
 async function changePassword() {
   if (passwordData.newPassword !== passwordData.confirmPassword) {
-    showToast('两次输入的密码不一致', 'error')
+    showToast(t('errors.passwordMismatch'), 'error')
     return
   }
 
@@ -490,7 +492,7 @@ async function changePassword() {
     )
     
     if (result && result.code === 200) {
-      showToast('密码修改成功，请重新登录', 'success')
+      showToast(t('profile.passwordChangeSuccess'), 'success')
       
       // 清空表单
       passwordData.oldPassword = ''
@@ -503,11 +505,11 @@ async function changePassword() {
         window.location.href = '/login'
       }, 1500)
     } else {
-      showToast(result?.message || '修改失败', 'error')
+      showToast(result?.message || t('profile.passwordChangeFailed'), 'error')
     }
   } catch (error) {
     console.error('修改密码失败:', error)
-    showToast('修改失败', 'error')
+    showToast(t('profile.passwordChangeFailed'), 'error')
   } finally {
     passwordLoading.value = false
   }

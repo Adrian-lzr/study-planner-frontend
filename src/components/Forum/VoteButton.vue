@@ -8,13 +8,13 @@
     @click="handleVote"
     :disabled="loading"
   >
-    <i class="bi" :class="isVoted ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-up'"></i>
+    <i class="bi" :class="isVoted ? 'bi-heart-fill' : 'bi-heart'"></i>
     <span class="ms-1">{{ voteCount }}</span>
   </button>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   voteCount: {
@@ -33,6 +33,15 @@ const loading = ref(false)
 const localVoteCount = ref(props.voteCount)
 const localIsVoted = ref(props.isVoted)
 
+// 监听 prop 变化，同步到本地状态
+watch(() => props.voteCount, (newVal) => {
+  localVoteCount.value = newVal
+})
+
+watch(() => props.isVoted, (newVal) => {
+  localIsVoted.value = newVal
+})
+
 const voteCount = computed(() => localVoteCount.value)
 const isVoted = computed(() => localIsVoted.value)
 
@@ -42,10 +51,16 @@ async function handleVote() {
   loading.value = true
   try {
     const result = await emit('vote')
-    if (result) {
-      localVoteCount.value = result.vote_count
-      localIsVoted.value = result.is_voted
+    if (result && typeof result === 'object') {
+      if (result.vote_count !== undefined) {
+        localVoteCount.value = result.vote_count
+      }
+      if (result.is_voted !== undefined) {
+        localIsVoted.value = result.is_voted
+      }
     }
+  } catch (error) {
+    console.error('点赞操作失败:', error)
   } finally {
     loading.value = false
   }

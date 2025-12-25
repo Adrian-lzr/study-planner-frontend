@@ -4,7 +4,7 @@
     <div class="container py-4">
       <div class="row">
         <div class="col-lg-10">
-          <h3 class="mb-4">我的内容</h3>
+          <h3 class="mb-4">{{ $t('forum.myContent.title') }}</h3>
 
           <!-- 标签页 -->
           <ul class="nav nav-tabs mb-4">
@@ -14,7 +14,7 @@
                 :class="{ active: activeTab === 'questions' }"
                 @click="switchTab('questions')"
               >
-                我的提问
+                {{ $t('forum.myContent.myQuestions') }}
               </button>
             </li>
             <li class="nav-item">
@@ -23,7 +23,7 @@
                 :class="{ active: activeTab === 'answers' }"
                 @click="switchTab('answers')"
               >
-                我的回答
+                {{ $t('forum.myContent.myAnswers') }}
               </button>
             </li>
             <li class="nav-item">
@@ -32,7 +32,7 @@
                 :class="{ active: activeTab === 'collections' }"
                 @click="switchTab('collections')"
               >
-                我的收藏
+                {{ $t('forum.myContent.myCollections') }}
               </button>
             </li>
             <li class="nav-item">
@@ -41,7 +41,16 @@
                 :class="{ active: activeTab === 'following' }"
                 @click="switchTab('following')"
               >
-                我的关注
+                {{ $t('forum.myContent.myFollowing') }}
+              </button>
+            </li>
+            <li class="nav-item">
+              <button 
+                class="nav-link"
+                :class="{ active: activeTab === 'followers' }"
+                @click="switchTab('followers')"
+              >
+                {{ $t('forum.myContent.myFollowers') }}
               </button>
             </li>
           </ul>
@@ -49,16 +58,16 @@
           <!-- 内容列表 -->
           <div v-if="loading" class="text-center py-5">
             <div class="spinner-border" role="status">
-              <span class="visually-hidden">加载中...</span>
+              <span class="visually-hidden">{{ $t('common.loading') }}</span>
             </div>
           </div>
 
           <!-- 我的提问 -->
           <div v-else-if="activeTab === 'questions'">
             <div v-if="forumStore.myQuestions.length === 0" class="text-center py-5 text-muted">
-              暂无提问
+              {{ $t('forum.myContent.noQuestions') }}
               <div class="mt-3">
-                <router-link to="/forum/ask" class="btn btn-primary">去提问</router-link>
+                <router-link to="/forum/ask" class="btn btn-primary">{{ $t('forum.myContent.goToAsk') }}</router-link>
               </div>
             </div>
             <div v-else>
@@ -85,11 +94,11 @@
                         </span>
                         <span class="me-3">
                           <i class="bi bi-chat-dots"></i>
-                          {{ question.answer_count || 0 }} 回答
+                          {{ question.answer_count || 0 }} {{ $t('forum.myContent.answers') }}
                         </span>
                         <span>
                           <i class="bi bi-eye"></i>
-                          {{ question.view_count || 0 }} 浏览
+                          {{ question.view_count || 0 }} {{ $t('forum.myContent.views') }}
                         </span>
                       </div>
                     </div>
@@ -98,7 +107,7 @@
                         class="btn btn-sm btn-outline-danger"
                         @click="deleteQuestion(question.id)"
                       >
-                        <i class="bi bi-trash"></i> 删除
+                        <i class="bi bi-trash"></i> {{ $t('forum.myContent.delete') }}
                       </button>
                     </div>
                   </div>
@@ -110,7 +119,7 @@
           <!-- 我的回答 -->
           <div v-else-if="activeTab === 'answers'">
             <div v-if="forumStore.myAnswers.length === 0" class="text-center py-5 text-muted">
-              暂无回答
+              {{ $t('forum.myContent.noAnswers') }}
             </div>
             <div v-else>
               <div 
@@ -145,14 +154,14 @@
                         class="btn btn-sm btn-outline-primary me-2"
                         @click="editAnswer(answer)"
                       >
-                        编辑
+                        {{ $t('common.edit') }}
                       </button>
                       <button 
                         v-if="answer.author_id === userStore.user?.id"
                         class="btn btn-sm btn-outline-danger"
                         @click="deleteAnswer(answer.id)"
                       >
-                        删除
+                        {{ $t('forum.myContent.delete') }}
                       </button>
                     </div>
                   </div>
@@ -164,7 +173,7 @@
           <!-- 我的收藏 -->
           <div v-else-if="activeTab === 'collections'">
             <div v-if="forumStore.myCollections.length === 0" class="text-center py-5 text-muted">
-              暂无收藏
+              {{ $t('forum.myContent.noCollections') }}
             </div>
             <div v-else>
               <div 
@@ -179,7 +188,7 @@
                         :to="`/forum/question/${item.target_id}`"
                         class="text-decoration-none fw-bold"
                       >
-                        {{ item.target?.title || '已删除' }}
+                        {{ item.target?.title || $t('common.delete') }}
                       </router-link>
                       <div class="text-muted small mt-1">
                         <i class="bi bi-clock"></i>
@@ -190,7 +199,7 @@
                       class="btn btn-sm btn-outline-danger"
                       @click="removeCollection(item.id)"
                     >
-                      取消收藏
+                      {{ $t('forum.actions.unfavorite') }}
                     </button>
                   </div>
                 </div>
@@ -200,17 +209,59 @@
 
           <!-- 我的关注 -->
           <div v-else-if="activeTab === 'following'">
-            <div v-if="following.length === 0" class="text-center py-5 text-muted">
+            <div v-if="!following.users?.length && !following.questions?.length && !following.topics?.length" class="text-center py-5 text-muted">
               暂无关注
             </div>
             <div v-else>
+              <!-- 关注的用户 -->
               <div class="card mb-3">
                 <div class="card-header">
-                  <h6 class="mb-0">关注的问题</h6>
+                  <h6 class="mb-0">{{ $t('forum.user.following') }}</h6>
                 </div>
                 <div class="card-body">
-                  <div v-if="following.questions?.length === 0" class="text-muted small">
-                    暂无关注的问题
+                  <div v-if="!following.users || following.users.length === 0" class="text-muted small">
+                    {{ $t('forum.myContent.noFollowing') }}
+                  </div>
+                  <div v-else>
+                    <div 
+                      v-for="followUser in following.users" 
+                      :key="followUser.id"
+                      class="card mb-2"
+                    >
+                      <div class="card-body d-flex align-items-center">
+                        <img 
+                          v-if="followUser.avatar" 
+                          :src="followUser.avatar" 
+                          class="rounded-circle me-3"
+                          style="width: 48px; height: 48px; object-fit: cover;"
+                          alt="avatar"
+                        >
+                        <i v-else class="bi bi-person-circle me-3" style="font-size: 48px; color: #dee2e6;"></i>
+                        <div class="flex-grow-1">
+                          <router-link 
+                            :to="`/forum/user/${followUser.id}`"
+                            class="text-decoration-none fw-bold"
+                          >
+                            {{ followUser.username }}
+                          </router-link>
+                          <div class="text-muted small" v-if="followUser.created_at">
+                            {{ $t('forum.user.registerTime') }} {{ formatTime(followUser.created_at) }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 关注的问题 -->
+              <div class="card mb-3">
+                <div class="card-header">
+                  <h6 class="mb-0">{{ $t('forum.user.questions') }}</h6>
+                </div>
+                <div class="card-body">
+                  <div v-if="!following.questions || following.questions.length === 0" class="text-muted small">
+                    {{ $t('forum.myContent.noFollowing') }}
                   </div>
                   <QuestionCard 
                     v-for="question in following.questions" 
@@ -220,13 +271,14 @@
                 </div>
               </div>
               
+              <!-- 关注的话题 -->
               <div class="card mb-3">
                 <div class="card-header">
-                  <h6 class="mb-0">关注的话题</h6>
+                  <h6 class="mb-0">{{ $t('forum.topic.title') }}</h6>
                 </div>
                 <div class="card-body">
-                  <div v-if="following.topics?.length === 0" class="text-muted small">
-                    暂无关注的话题
+                  <div v-if="!following.topics || following.topics.length === 0" class="text-muted small">
+                    {{ $t('forum.myContent.noFollowing') }}
                   </div>
                   <div v-else>
                     <div 
@@ -240,6 +292,45 @@
                       >
                         {{ topic.name }}
                       </router-link>
+                      <span class="text-muted small ms-2">
+                        {{ topic.question_count || 0 }} {{ $t('forum.topic.questions') }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 我的粉丝 -->
+          <div v-else-if="activeTab === 'followers'">
+            <div v-if="followers.length === 0" class="text-center py-5 text-muted">
+              {{ $t('forum.myContent.noFollowers') }}
+            </div>
+            <div v-else>
+              <div 
+                v-for="follower in followers" 
+                :key="follower.id"
+                class="card mb-3"
+              >
+                <div class="card-body d-flex align-items-center">
+                  <img 
+                    v-if="follower.avatar" 
+                    :src="follower.avatar" 
+                    class="rounded-circle me-3"
+                    style="width: 48px; height: 48px; object-fit: cover;"
+                    alt="avatar"
+                  >
+                  <i v-else class="bi bi-person-circle me-3" style="font-size: 48px; color: #dee2e6;"></i>
+                  <div class="flex-grow-1">
+                    <router-link 
+                      :to="`/forum/user/${follower.id}`"
+                      class="text-decoration-none fw-bold"
+                    >
+                      {{ follower.username }}
+                    </router-link>
+                    <div class="text-muted small" v-if="follower.created_at">
+                      {{ $t('forum.user.registerTime') }} {{ formatTime(follower.created_at) }}
                     </div>
                   </div>
                 </div>
@@ -255,6 +346,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Navbar from '../../components/Navbar.vue'
 import Footer from '../../components/Footer.vue'
 import { renderMarkdown } from '../../utils/markdown'
@@ -265,6 +357,7 @@ import { formatTime } from '../../utils/format'
 import { showToast } from '../../utils/toast'
 import QuestionCard from '../../components/Forum/QuestionCard.vue'
 
+const { t } = useI18n()
 const forumStore = useForumStore()
 const userStore = useUserStore()
 
@@ -272,8 +365,10 @@ const activeTab = ref('questions')
 const loading = ref(false)
 const following = ref({
   questions: [],
-  topics: []
+  topics: [],
+  users: []
 })
+const followers = ref([])
 
 onMounted(() => {
   loadContent()
@@ -292,6 +387,8 @@ async function loadContent() {
       await forumStore.fetchMyCollections()
     } else if (activeTab.value === 'following') {
       await loadFollowing()
+    } else if (activeTab.value === 'followers') {
+      await loadFollowers()
     }
   } catch (error) {
     console.error('加载内容失败:', error)
@@ -304,10 +401,23 @@ async function loadFollowing() {
   try {
     const response = await interactionApi.getMyFollowing()
     if (response.code === 200) {
-      following.value = response.data || { questions: [], topics: [] }
+      following.value = response.data || { questions: [], topics: [], users: [] }
     }
   } catch (error) {
     console.error('获取关注列表失败:', error)
+    following.value = { questions: [], topics: [], users: [] }
+  }
+}
+
+async function loadFollowers() {
+  try {
+    const response = await interactionApi.getMyFollowers()
+    if (response.code === 200) {
+      followers.value = response.data || []
+    }
+  } catch (error) {
+    console.error('获取粉丝列表失败:', error)
+    followers.value = []
   }
 }
 
@@ -328,41 +438,41 @@ function editAnswer(answer) {
 }
 
 async function deleteAnswer(answerId) {
-  if (!confirm('确定要删除这条回答吗？')) return
+  if (!confirm(t('forum.answer.confirmDelete'))) return
   
   try {
     const response = await answerApi.deleteAnswer(answerId)
     if (response.code === 200) {
-      showToast('删除成功', 'success')
+      showToast(t('common.success'), 'success')
       await forumStore.fetchMyAnswers()
     } else {
-      showToast(response.message || '删除失败', 'error')
+      showToast(response.message || t('errors.unknown'), 'error')
     }
   } catch (error) {
     console.error('删除失败:', error)
-    showToast('删除失败', 'error')
+    showToast(t('errors.unknown'), 'error')
   }
 }
 
 async function removeCollection(collectionId) {
   // 这里需要调用取消收藏的API
-  showToast('功能开发中', 'info')
+  showToast(t('common.info'), 'info')
 }
 
 async function deleteQuestion(questionId) {
-  if (!confirm('确定要删除这个问题吗？删除后无法恢复。')) return
+  if (!confirm(t('forum.question.confirmDelete'))) return
   
   try {
     const response = await questionApi.deleteQuestion(questionId)
     if (response.code === 200) {
-      showToast('删除成功', 'success')
+      showToast(t('common.success'), 'success')
       await forumStore.fetchMyQuestions()
     } else {
-      showToast(response.message || '删除失败', 'error')
+      showToast(response.message || t('errors.unknown'), 'error')
     }
   } catch (error) {
     console.error('删除失败:', error)
-    showToast('删除失败', 'error')
+    showToast(t('errors.unknown'), 'error')
   }
 }
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div class="comment-list">
     <div v-if="comments.length === 0 && !loading" class="text-muted small">
-      暂无评论
+      {{ $t('forum.comment.noComments') }}
     </div>
     
     <div v-for="comment in comments" :key="comment.id" class="comment-item mb-2">
@@ -17,13 +17,14 @@
               class="btn btn-sm btn-link p-0 text-decoration-none"
               @click="handleReply(comment)"
             >
-              回复
+              {{ $t('forum.comment.reply') }}
             </button>
             <button 
               class="btn btn-sm btn-link p-0 text-decoration-none"
+              :class="{ 'text-primary': comment.is_voted }"
               @click="handleVote(comment)"
             >
-              <i class="bi bi-hand-thumbs-up"></i>
+              <i class="bi" :class="comment.is_voted ? 'bi-heart-fill' : 'bi-heart'"></i>
               {{ comment.vote_count || 0 }}
             </button>
           </div>
@@ -45,6 +46,16 @@
                     <span class="text-primary">@{{ reply.parent?.author?.username }}</span>
                     {{ reply.content }}
                   </p>
+                  <div class="d-flex align-items-center gap-2">
+                    <button 
+                      class="btn btn-sm btn-link p-0 text-decoration-none"
+                      :class="{ 'text-primary': reply.is_voted }"
+                      @click="handleVote(reply)"
+                    >
+                      <i class="bi" :class="reply.is_voted ? 'bi-heart-fill' : 'bi-heart'"></i>
+                      {{ reply.vote_count || 0 }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -60,7 +71,7 @@
           type="text" 
           class="form-control form-control-sm"
           v-model="newComment"
-          placeholder="写下你的评论..."
+          :placeholder="$t('forum.comment.placeholder')"
           @keyup.enter="submitComment"
         >
         <button 
@@ -69,7 +80,7 @@
           @click="submitComment"
           :disabled="!newComment.trim()"
         >
-          发送
+          {{ $t('forum.comment.submit') }}
         </button>
       </div>
     </div>
@@ -95,6 +106,7 @@ const comments = ref([])
 const loading = ref(false)
 const newComment = ref('')
 const replyingTo = ref(null)
+const voting = ref(null)
 
 onMounted(() => {
   fetchComments()
@@ -127,17 +139,17 @@ async function submitComment() {
     })
     
     if (response.code === 200) {
-      showToast('评论成功', 'success')
+      showToast(t('common.success'), 'success')
       newComment.value = ''
       replyingTo.value = null
       await fetchComments()
       emit('comment-added')
     } else {
-      showToast(response.message || '评论失败', 'error')
+      showToast(response.message || t('errors.unknown'), 'error')
     }
   } catch (error) {
     console.error('评论失败:', error)
-    showToast('评论失败', 'error')
+    showToast(t('errors.unknown'), 'error')
   }
 }
 
@@ -147,13 +159,22 @@ function handleReply(comment) {
 }
 
 async function handleVote(comment) {
+  if (voting.value === comment.id) return
+  
   try {
+    voting.value = comment.id
     const response = await commentApi.voteComment(comment.id)
-    if (response.code === 200) {
-      comment.vote_count = response.data.vote_count
+    if (response.code === 200 && response.data) {
+      comment.vote_count = response.data.vote_count || comment.vote_count
+      comment.is_voted = response.data.is_voted !== undefined ? response.data.is_voted : !comment.is_voted
+    } else {
+      showToast(response.message || t('errors.unknown'), 'error')
     }
   } catch (error) {
     console.error('点赞失败:', error)
+    showToast(t('errors.unknown'), 'error')
+  } finally {
+    voting.value = null
   }
 }
 </script>

@@ -7,7 +7,7 @@
           <!-- 话题信息 -->
           <div v-if="loading" class="text-center py-5">
             <div class="spinner-border" role="status">
-              <span class="visually-hidden">加载中...</span>
+              <span class="visually-hidden">{{ $t('common.loading') }}</span>
             </div>
           </div>
 
@@ -22,11 +22,11 @@
                   <div class="d-flex align-items-center text-muted small">
                     <span class="me-3">
                       <i class="bi bi-people"></i>
-                      {{ topic.follow_count || 0 }} 关注
+                      {{ topic.follow_count || 0 }} {{ $t('forum.topic.followers') }}
                     </span>
                     <span>
                       <i class="bi bi-question-circle"></i>
-                      {{ topic.question_count || 0 }} 问题
+                      {{ topic.question_count || 0 }} {{ $t('forum.topic.questions') }}
                     </span>
                   </div>
                 </div>
@@ -34,10 +34,11 @@
                   class="btn"
                   :class="topic.is_followed ? 'btn-primary' : 'btn-outline-primary'"
                   @click="handleFollow"
+                  :disabled="followingTopic"
                   v-if="userStore.isLoggedIn"
                 >
                   <i class="bi" :class="topic.is_followed ? 'bi-heart-fill' : 'bi-heart'"></i>
-                  {{ topic.is_followed ? '已关注' : '关注' }}
+                  {{ topic.is_followed ? $t('forum.topic.followed') : $t('forum.topic.follow') }}
                 </button>
               </div>
             </div>
@@ -45,14 +46,14 @@
 
           <!-- 问题列表 -->
           <div>
-            <h5 class="mb-3">相关问题</h5>
+            <h5 class="mb-3">{{ $t('forum.relatedQuestions') }}</h5>
             <div v-if="questionsLoading" class="text-center py-3">
               <div class="spinner-border spinner-border-sm" role="status">
-                <span class="visually-hidden">加载中...</span>
+                <span class="visually-hidden">{{ $t('common.loading') }}</span>
               </div>
             </div>
             <div v-else-if="questions.length === 0" class="text-center py-5 text-muted">
-              该话题下暂无问题
+              {{ $t('forum.topic.noQuestions') }}
             </div>
             <QuestionCard 
               v-for="question in questions" 
@@ -68,11 +69,11 @@
             <!-- 优秀回答者 -->
             <div class="card">
               <div class="card-header">
-                <h6 class="mb-0">优秀回答者</h6>
+                <h6 class="mb-0">{{ $t('forum.topicPage.topAnswerers') }}</h6>
               </div>
               <div class="card-body">
                 <div v-if="topAnswerers.length === 0" class="text-muted small">
-                  暂无数据
+                  {{ $t('forum.topicPage.noData') }}
                 </div>
                 <div v-else>
                   <div 
@@ -95,7 +96,7 @@
                         {{ user.username }}
                       </router-link>
                       <div class="text-muted small">
-                        {{ user.answer_count || 0 }} 回答
+                        {{ user.answer_count || 0 }} {{ $t('forum.topicPage.answers') }}
                       </div>
                     </div>
                   </div>
@@ -112,6 +113,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import Footer from '../../components/Footer.vue'
@@ -120,6 +122,8 @@ import { useUserStore } from '../../stores/user'
 import { useForumStore } from '../../stores/forum'
 import { showToast } from '../../utils/toast'
 import QuestionCard from '../../components/Forum/QuestionCard.vue'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -151,11 +155,11 @@ async function loadTopic() {
     if (response.code === 200) {
       topic.value = response.data
     } else {
-      showToast(response.message || '获取话题失败', 'error')
+      showToast(response.message || t('errors.unknown'), 'error')
     }
   } catch (error) {
     console.error('获取话题失败:', error)
-    showToast('获取话题失败', 'error')
+    showToast(t('errors.unknown'), 'error')
   } finally {
     loading.value = false
   }
@@ -178,19 +182,28 @@ async function loadQuestions() {
   }
 }
 
+const followingTopic = ref(false)
+
 async function handleFollow() {
   if (!userStore.isLoggedIn) {
-    showToast('请先登录', 'warning')
+    showToast(t('auth.loginRequired'), 'warning')
     return
   }
   
-  await forumStore.followTopic(topic.value.id)
-  // 更新本地状态
-  if (topic.value) {
-    topic.value.is_followed = !topic.value.is_followed
-    topic.value.follow_count = topic.value.is_followed 
-      ? (topic.value.follow_count || 0) + 1 
-      : Math.max(0, (topic.value.follow_count || 0) - 1)
+  if (followingTopic.value || !topic.value) return
+  followingTopic.value = true
+  try {
+    const result = await forumStore.followTopic(topic.value.id)
+    // 更新本地状态
+    if (topic.value && result) {
+      topic.value.is_followed = result.is_followed !== undefined ? result.is_followed : !topic.value.is_followed
+      topic.value.follow_count = result.follow_count !== undefined ? result.follow_count : topic.value.follow_count
+    }
+  } catch (error) {
+    console.error('关注话题失败:', error)
+    showToast(t('errors.unknown'), 'error')
+  } finally {
+    followingTopic.value = false
   }
 }
 </script>

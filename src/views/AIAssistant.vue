@@ -7,8 +7,8 @@
         <div class="col-md-10">
           <div class="card shadow">
             <div class="card-header bg-primary text-white">
-              <h5 class="mb-0"><i class="bi bi-robot"></i> AI学习助手</h5>
-              <small>智能问答，解决学习疑惑</small>
+              <h5 class="mb-0"><i class="bi bi-robot"></i> {{ $t('aiAssistant.aiAssistant') }}</h5>
+              <small>{{ $t('aiAssistant.subtitle') }}</small>
             </div>
             <div class="card-body">
               <!-- 聊天消息容器 -->
@@ -21,7 +21,7 @@
                 >
                   <div>
                     <div v-if="msg.role === 'assistant'" class="small text-muted mb-1">
-                      <i class="bi bi-robot"></i> AI助手
+                      <i class="bi bi-robot"></i> {{ $t('aiAssistant.aiAssistant') }}
                     </div>
                     <div 
                       v-if="msg.role === 'assistant'"
@@ -35,7 +35,7 @@
                 <!-- 加载中 -->
                 <div v-if="loading" class="chat-message ai">
                   <div class="loading-spinner"></div>
-                  <span class="ms-2">AI正在思考...</span>
+                  <span class="ms-2">{{ $t('aiAssistant.thinking') }}</span>
                 </div>
               </div>
 
@@ -46,7 +46,7 @@
                     type="text"
                     class="form-control"
                     v-model="userInput"
-                    placeholder="输入您的问题..."
+                    :placeholder="$t('aiAssistant.inputPlaceholder')"
                     :disabled="loading"
                     required
                   />
@@ -55,14 +55,14 @@
                     class="btn btn-primary"
                     :disabled="loading || !userInput.trim()"
                   >
-                    <i class="bi bi-send"></i> 发送
+                    <i class="bi bi-send"></i> {{ $t('aiAssistant.send') }}
                   </button>
                 </div>
               </form>
 
               <!-- 建议问题 -->
               <div class="mt-3">
-                <small class="text-muted">建议问题：</small>
+                <small class="text-muted">{{ $t('aiAssistant.suggestedQuestions') }}</small>
                 <div class="d-flex flex-wrap gap-2 mt-2">
                   <button
                     v-for="(question, index) in suggestedQuestions"
@@ -86,24 +86,25 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
 import { aiApi } from '../api/ai'
 import { showToast } from '../utils/toast'
 import { renderMarkdown } from '../utils/markdown'
 
+const { t } = useI18n()
 const messages = ref([])
 const userInput = ref('')
 const loading = ref(false)
 const chatContainer = ref(null)
 
-const suggestedQuestions = [
-  '如何高效学习编程？',
-  '推荐一些学习资源',
-  '如何保持学习动力？',
-  '制定学习计划的技巧'
-]
+const suggestedQuestions = computed(() => [
+  t('aiAssistant.question1'),
+  t('aiAssistant.question2'),
+  t('aiAssistant.question3')
+])
 
 onMounted(() => {
   // 加载历史消息
@@ -114,7 +115,7 @@ onMounted(() => {
     // 添加欢迎消息
     messages.value.push({
       role: 'assistant',
-      content: '你好！我是你的AI学习助手，有什么可以帮助你的吗？'
+      content: t('aiAssistant.welcome', { defaultValue: '你好！我是你的AI学习助手，有什么可以帮助你的吗？' })
     })
   }
 })
@@ -148,7 +149,7 @@ async function sendMessage() {
 
     if (result && result.code === 200) {
       // 添加AI回复
-      const aiResponse = result.data?.content || result.data || '抱歉，我无法理解您的问题。'
+      const aiResponse = result.data?.content || result.data || t('aiAssistant.cannotUnderstand')
       console.log('AI回复:', aiResponse)
       messages.value.push({
         role: 'assistant',
@@ -159,7 +160,7 @@ async function sendMessage() {
       localStorage.setItem('aiChatHistory', JSON.stringify(messages.value))
       scrollToBottom()
     } else {
-      const errorMsg = result?.message || '请求失败'
+      const errorMsg = result?.message || t('aiAssistant.requestFailed')
       console.error('请求失败:', errorMsg)
       showToast(errorMsg, 'error')
       // 移除用户消息（因为请求失败）
@@ -168,7 +169,7 @@ async function sendMessage() {
   } catch (error) {
     console.error('发送消息失败:', error)
     console.error('错误详情:', error.response || error.message)
-    showToast('网络错误，请稍后重试: ' + (error.message || '未知错误'), 'error')
+    showToast(t('errors.network') + ': ' + (error.message || t('errors.unknown')), 'error')
     // 移除用户消息（因为请求失败）
     if (messages.value.length > 0 && messages.value[messages.value.length - 1].role === 'user') {
       messages.value.pop()

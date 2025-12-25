@@ -7,13 +7,13 @@
             <div class="card-body p-5">
               <div class="text-center mb-4">
                 <h2><i class="bi bi-book text-primary"></i></h2>
-                <h4>注册</h4>
-                <p class="text-muted">创建你的账户</p>
+                <h4>{{ $t('auth.register.title') }}</h4>
+                <p class="text-muted">{{ $t('auth.register.welcome') }}</p>
               </div>
 
               <form @submit.prevent="handleRegister">
                 <div class="mb-3">
-                  <label for="username" class="form-label">用户名</label>
+                  <label for="username" class="form-label">{{ $t('auth.register.username') }}</label>
                   <input
                     type="text"
                     class="form-control"
@@ -22,10 +22,10 @@
                     required
                     minlength="3"
                   />
-                  <small class="text-muted">至少3个字符</small>
+                  <small class="text-muted">{{ $t('common.minLength', { count: 3 }) }}</small>
                 </div>
                 <div class="mb-3">
-                  <label for="email" class="form-label">邮箱</label>
+                  <label for="email" class="form-label">{{ $t('auth.register.email') }}</label>
                   <input
                     type="email"
                     class="form-control"
@@ -35,7 +35,7 @@
                   />
                 </div>
                 <div class="mb-3">
-                  <label for="password" class="form-label">密码</label>
+                  <label for="password" class="form-label">{{ $t('auth.register.password') }}</label>
                   <input
                     type="password"
                     class="form-control"
@@ -44,10 +44,10 @@
                     required
                     minlength="6"
                   />
-                  <small class="text-muted">至少6个字符</small>
+                  <small class="text-muted">{{ $t('common.minLength', { count: 6 }) }}</small>
                 </div>
                 <div class="mb-3">
-                  <label for="confirmPassword" class="form-label">确认密码</label>
+                  <label for="confirmPassword" class="form-label">{{ $t('auth.register.confirmPassword') }}</label>
                   <input
                     type="password"
                     class="form-control"
@@ -59,7 +59,7 @@
                 <div class="d-grid">
                   <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
                     <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-                    注册
+                    {{ $t('auth.register.submit') }}
                   </button>
                 </div>
               </form>
@@ -67,14 +67,14 @@
               <hr class="my-4" />
 
               <p class="text-center mb-0">
-                已有账号？<router-link to="/login">立即登录</router-link>
+                {{ $t('auth.register.hasAccount') }}<router-link to="/login">{{ $t('auth.register.loginNow') }}</router-link>
               </p>
             </div>
           </div>
 
           <div class="text-center mt-3">
             <router-link to="/" class="text-muted">
-              <i class="bi bi-arrow-left"></i> 返回首页
+              <i class="bi bi-arrow-left"></i> {{ $t('common.back') }}
             </router-link>
           </div>
         </div>
@@ -86,8 +86,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '../stores/user'
 import { showToast } from '../utils/toast'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -100,7 +103,7 @@ const loading = ref(false)
 
 async function handleRegister() {
   if (password.value !== confirmPassword.value) {
-    showToast('两次输入的密码不一致', 'error')
+    showToast(t('errors.passwordMismatch'), 'error')
     return
   }
 
@@ -110,12 +113,12 @@ async function handleRegister() {
     const result = await userStore.register(username.value, password.value, email.value)
     
     if (result.success) {
-      showToast('注册成功！请登录', 'success')
+      showToast(t('auth.registerSuccess'), 'success')
       setTimeout(() => {
         router.push('/login')
       }, 1000)
     } else {
-      showToast(result.message || '注册失败', 'error')
+      showToast(result.message || t('errors.unknown'), 'error')
     }
   } finally {
     loading.value = false

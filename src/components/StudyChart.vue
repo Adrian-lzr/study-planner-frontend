@@ -1,7 +1,7 @@
 <template>
   <div class="card h-100">
     <div class="card-header d-flex justify-content-between align-items-center bg-white">
-      <h6 class="mb-0"><i class="bi bi-bar-chart-line"></i> 学习进度可视化</h6>
+      <h6 class="mb-0"><i class="bi bi-bar-chart-line"></i> {{ $t('studyChart.title') }}</h6>
       <div class="btn-group btn-group-sm">
         <button 
           type="button" 
@@ -9,7 +9,7 @@
           :class="{ active: period === 'week' }"
           @click="period = 'week'"
         >
-          本周
+          {{ $t('studyChart.thisWeek') }}
         </button>
         <button 
           type="button" 
@@ -17,7 +17,7 @@
           :class="{ active: period === 'month' }"
           @click="period = 'month'"
         >
-          本月
+          {{ $t('studyChart.thisMonth') }}
         </button>
       </div>
     </div>
@@ -29,7 +29,10 @@
 
 <script setup>
 import { ref, onMounted, watch, onUnmounted, toRefs } from 'vue'
+import { useI18n } from 'vue-i18n'
 import * as echarts from 'echarts'
+
+const { t } = useI18n()
 
 const props = defineProps({
   chartData: {
@@ -88,7 +91,9 @@ function updateChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
-      formatter: '{b} <br/> 学习时长: {c} 小时'
+      formatter: (params) => {
+        return `${params.name} <br/> ${t('studyChart.studyTime')}: ${params.value} ${t('studyChart.hours')}`
+      }
     },
     grid: {
       left: '3%',
@@ -103,11 +108,11 @@ function updateChart() {
     },
     yAxis: {
       type: 'value',
-      name: '小时'
+      name: t('studyChart.hours')
     },
     series: [
       {
-        name: '学习时长',
+        name: t('studyChart.studyTime'),
         type: 'line',
         smooth: true,
         data: data.series,

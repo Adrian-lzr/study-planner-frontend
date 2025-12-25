@@ -6,13 +6,13 @@
       <!-- 加载状态 -->
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 text-muted">正在加载计划详情...</p>
+        <p class="mt-2 text-muted">{{ $t('planDetail.loading') }}</p>
       </div>
 
       <div v-else-if="!plan" class="text-center py-5">
         <i class="bi bi-exclamation-circle fs-1 text-muted"></i>
-        <p class="mt-3">未找到该计划</p>
-        <button class="btn btn-primary" @click="router.push('/my-plans')">返回列表</button>
+        <p class="mt-3">{{ $t('planDetail.notFound') }}</p>
+        <button class="btn btn-primary" @click="router.push('/my-plans')">{{ $t('planDetail.returnToList') }}</button>
       </div>
 
       <div v-else>
@@ -24,8 +24,8 @@
                 <h2 class="card-title mb-2">{{ plan.title }}</h2>
                 <p class="text-muted mb-2">
                   <span class="badge bg-primary me-2">{{ plan.level }}</span>
-                  <span class="badge bg-info me-2">{{ plan.totalDays }}天</span>
-                  <span class="badge bg-secondary">{{ formatNumber(plan.dailyHours) }}小时/天</span>
+                  <span class="badge bg-info me-2">{{ plan.totalDays }}{{ $t('planDetail.day') }}</span>
+                  <span class="badge bg-secondary">{{ formatNumber(plan.dailyHours) }}{{ $t('planDetail.hoursPerDay') }}</span>
                 </p>
                 <p class="card-text">{{ plan.goal }}</p>
               </div>
@@ -38,7 +38,7 @@
                 <div class="progress" style="width: 150px; height: 10px;">
                   <div class="progress-bar bg-success" :style="{ width: progress + '%' }"></div>
                 </div>
-                <small class="text-muted">进度: {{ formatNumber(progress) }}%</small>
+                <small class="text-muted">{{ $t('planDetail.progress', { progress: formatNumber(progress) }) }}</small>
               </div>
             </div>
           </div>
@@ -47,7 +47,7 @@
         <!-- 每日任务列表 -->
         <div class="row">
           <div class="col-md-8">
-            <h4 class="mb-3">每日任务</h4>
+            <h4 class="mb-3">{{ $t('planDetail.dailyTasks') }}</h4>
             <div class="accordion" id="planAccordion">
               <div v-for="detail in details" :key="detail.id" class="accordion-item">
                 <h2 class="accordion-header">
@@ -59,8 +59,8 @@
                     :data-bs-target="'#collapse' + detail.id"
                   >
                     <div class="d-flex justify-content-between w-100 me-3">
-                      <span>第 {{ detail.dayNumber }} 天：{{ detail.content.substring(0, 30) }}...</span>
-                      <span v-if="detail.isCompleted" class="badge bg-success">已完成</span>
+                      <span>{{ $t('planDetail.dayNumber', { day: detail.dayNumber, content: detail.content.substring(0, 30) }) }}...</span>
+                      <span v-if="detail.isCompleted" class="badge bg-success">{{ $t('planDetail.completedDays') }}</span>
                     </div>
                   </button>
                 </h2>
@@ -71,10 +71,10 @@
                   data-bs-parent="#planAccordion"
                 >
                   <div class="accordion-body">
-                    <p><strong>学习内容：</strong>{{ detail.content }}</p>
-                    <p><strong>预计时长：</strong>{{ formatNumber(detail.duration) }} 小时</p>
+                    <p><strong>{{ $t('planDetail.learningContent') }}</strong>{{ detail.content }}</p>
+                    <p><strong>{{ $t('planDetail.estimatedDuration') }}</strong>{{ formatNumber(detail.duration) }} {{ $t('planDetail.hours') }}</p>
                     <div v-if="detail.resources && detail.resources !== '[]'">
-                      <strong>推荐资源：</strong>
+                      <strong>{{ $t('planDetail.recommendedResources') }}</strong>
                       <ul>
                         <li v-for="(res, idx) in parseResources(detail.resources)" :key="idx">
                           {{ res }}
@@ -87,10 +87,10 @@
                         class="btn btn-success btn-sm"
                         @click="checkIn(detail)"
                       >
-                        <i class="bi bi-check-circle"></i> 打卡完成
+                        <i class="bi bi-check-circle"></i> {{ $t('planDetail.checkIn') }}
                       </button>
                       <span v-else class="text-success">
-                        <i class="bi bi-check-circle-fill"></i> 已于 {{ formatDate(detail.updateTime) }} 完成
+                        <i class="bi bi-check-circle-fill"></i> {{ $t('planDetail.completedAt', { date: formatDate(detail.updateTime) }) }}
                       </span>
                     </div>
                   </div>
@@ -103,11 +103,11 @@
           <div class="col-md-4">
             <div class="card mb-3">
               <div class="card-header">
-                <h5 class="mb-0">学习统计</h5>
+                <h5 class="mb-0">{{ $t('planDetail.studyStats') }}</h5>
               </div>
               <div class="card-body">
-                <p>已完成任务：{{ completedCount }} / {{ details.length }}</p>
-                <p>剩余任务：{{ details.length - completedCount }}</p>
+                <p>{{ $t('planDetail.completedTasks') }}：{{ completedCount }} / {{ details.length }}</p>
+                <p>{{ $t('planDetail.remainingTasks') }}：{{ details.length - completedCount }}</p>
               </div>
             </div>
           </div>
@@ -121,6 +121,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
@@ -129,6 +130,7 @@ import { checkinApi } from '../api/checkin'
 import { showToast } from '../utils/toast'
 import { formatDate, formatNumber } from '../utils/format'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const planId = route.params.id
@@ -162,11 +164,11 @@ async function loadPlanDetail() {
         currentDay.value = firstUnfinished.dayNumber
       }
     } else {
-      showToast(result?.message || '加载失败', 'error')
+      showToast(result?.message || t('myPlans.loadFailed'), 'error')
     }
   } catch (error) {
     console.error('加载详情失败:', error)
-    showToast('加载失败', 'error')
+    showToast(t('myPlans.loadFailed'), 'error')
   } finally {
     loading.value = false
   }
@@ -199,18 +201,18 @@ async function checkIn(detail) {
     })
 
     if (result && result.code === 200) {
-      showToast('打卡成功！', 'success')
+      showToast(t('dashboard.checkInSuccess', { hours: detail.duration }), 'success')
       // 更新本地状态
       detail.isCompleted = 1
       // 重新计算进度
       const completed = details.value.filter(d => d.isCompleted).length
       progress.value = (completed / details.value.length) * 100
     } else {
-      showToast(result?.message || '打卡失败', 'error')
+      showToast(result?.message || t('dashboard.checkInFailed'), 'error')
     }
   } catch (error) {
     console.error('打卡失败:', error)
-    showToast('打卡失败', 'error')
+    showToast(t('dashboard.checkInFailed'), 'error')
   }
 }
 </script>

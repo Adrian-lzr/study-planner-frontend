@@ -4,25 +4,25 @@
     <div class="chat-container">
       <div class="chat-header">
         <div class="header-left">
-          <button class="btn-back" @click="handleGoBack" title="返回">
+          <button class="btn-back" @click="handleGoBack" :title="$t('chat.back')">
             <i class="bi bi-arrow-left"></i>
           </button>
           <div class="header-title">
             <h4 class="mb-0">
-              <i class="bi bi-chat-dots"></i> 学习交流群
+              <i class="bi bi-chat-dots"></i> {{ $t('chat.studyGroup') }}
             </h4>
-            <small class="header-subtitle">与同学们一起交流学习心得</small>
+            <small class="header-subtitle">{{ $t('chat.subtitle') }}</small>
           </div>
         </div>
         <div class="chat-status">
           <span v-if="chatStore.isConnected" class="badge bg-success">
-            <i class="bi bi-circle-fill"></i> 在线 ({{ chatStore.onlineCount }}人)
+            <i class="bi bi-circle-fill"></i> {{ $t('chat.online', { count: chatStore.onlineCount }) }}
           </span>
           <span v-else-if="chatStore.isLoading" class="badge bg-warning">
-            <i class="bi bi-hourglass-split"></i> 连接中...
+            <i class="bi bi-hourglass-split"></i> {{ $t('chat.connecting') }}
           </span>
           <span v-else class="badge bg-danger">
-            <i class="bi bi-x-circle"></i> 未连接
+            <i class="bi bi-x-circle"></i> {{ $t('chat.offline') }}
           </span>
         </div>
       </div>
@@ -30,7 +30,7 @@
     <!-- 在线用户列表（侧边栏，可选） -->
     <div v-if="showOnlineUsers" class="online-users-sidebar">
       <div class="sidebar-header">
-        <h6>在线用户 ({{ chatStore.onlineCount }})</h6>
+        <h6>{{ $t('chat.onlineUsers', { count: chatStore.onlineCount }) }}</h6>
         <button class="btn btn-sm btn-link" @click="showOnlineUsers = false">
           <i class="bi bi-x"></i>
         </button>
@@ -45,7 +45,7 @@
           <span>{{ user.username }}</span>
         </div>
         <div v-if="chatStore.onlineUsers.length === 0" class="text-muted text-center p-3">
-          暂无在线用户
+          {{ $t('chat.noOnlineUsers') }}
         </div>
       </div>
     </div>
@@ -54,7 +54,7 @@
     <div class="chat-messages" ref="messagesContainer">
       <div v-if="chatStore.messages.length === 0" class="empty-state">
         <i class="bi bi-chat-quote"></i>
-        <p>还没有消息，快来第一个发言吧！</p>
+        <p>{{ $t('chat.noMessages') }}</p>
       </div>
       
       <!-- 加载历史消息提示 -->
@@ -62,7 +62,7 @@
         <div class="spinner-border spinner-border-sm text-primary" role="status">
           <span class="visually-hidden">加载中...</span>
         </div>
-        <span class="ms-2">正在加载历史消息...</span>
+        <span class="ms-2">{{ $t('chat.loadingHistory') }}</span>
       </div>
       
       <div
@@ -97,7 +97,7 @@
           class="btn btn-sm btn-outline-secondary"
           @click="showOnlineUsers = !showOnlineUsers"
           :class="{ 'active': showOnlineUsers }"
-          title="在线用户"
+          :title="$t('chat.onlineUsersTitle')"
         >
           <i class="bi bi-people"></i>
           <span class="ms-1">{{ chatStore.onlineCount }}</span>
@@ -105,14 +105,14 @@
         <button
           class="btn btn-sm btn-outline-secondary"
           @click="scrollToBottom"
-          title="滚动到底部"
+          :title="$t('chat.scrollToBottom')"
         >
           <i class="bi bi-arrow-down-circle"></i>
         </button>
         <button
           class="btn btn-sm btn-outline-secondary"
           @click="handleClearMessages"
-          title="清空消息"
+          :title="$t('chat.clearMessages')"
           v-if="chatStore.messages.length > 0"
         >
           <i class="bi bi-trash"></i>
@@ -124,7 +124,7 @@
           @keydown.enter.exact.prevent="handleSendMessage"
           @keydown.enter.shift.exact="inputMessage += '\n'"
           class="form-control"
-          placeholder="输入消息... (Enter发送, Shift+Enter换行)"
+          :placeholder="$t('chat.enterToSend')"
           rows="2"
           :disabled="!chatStore.isConnected"
         ></textarea>
@@ -133,7 +133,7 @@
           @click="handleSendMessage"
           :disabled="!chatStore.isConnected || !inputMessage.trim()"
         >
-          <i class="bi bi-send"></i> 发送
+          <i class="bi bi-send"></i> {{ $t('chat.send') }}
         </button>
       </div>
     </div>
@@ -143,12 +143,14 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useChatStore } from '../stores/chat'
 import { useUserStore } from '../stores/user'
 import { useRouter } from 'vue-router'
 import { showToast } from '../utils/toast'
 import Navbar from '../components/Navbar.vue'
 
+const { t } = useI18n()
 const chatStore = useChatStore()
 const userStore = useUserStore()
 const router = useRouter()
@@ -160,7 +162,7 @@ const isScrolling = ref(false)
 
 // 检查登录状态
 if (!userStore.isLoggedIn) {
-  showToast('请先登录', 'warning')
+  showToast(t('auth.loginRequired'), 'warning')
   router.push('/login?redirect=/chat')
 }
 
@@ -238,7 +240,7 @@ function handleSendMessage() {
   }
 
   if (!chatStore.isConnected) {
-    showToast('连接未建立，请稍后重试', 'warning')
+    showToast(t('chat.connectionNotEstablished'), 'warning')
     return
   }
 
@@ -280,9 +282,9 @@ function handleGoBack() {
 
 // 清空消息
 function handleClearMessages() {
-  if (confirm('确定要清空当前聊天记录吗？')) {
+  if (confirm(t('chat.clearMessagesConfirm'))) {
     chatStore.clearMessages()
-    showToast('已清空聊天记录', 'info')
+    showToast(t('chat.messagesCleared'), 'info')
   }
 }
 

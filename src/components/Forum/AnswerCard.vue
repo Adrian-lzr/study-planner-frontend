@@ -46,6 +46,7 @@
         <button 
           class="btn btn-sm btn-outline-secondary"
           @click="toggleComments"
+          :title="$t('forum.answer.comments')"
         >
           <i class="bi bi-chat-dots"></i>
           <span class="ms-1">{{ answer.comment_count || 0 }}</span>
@@ -54,6 +55,7 @@
           class="btn btn-sm"
           :class="answer.is_collected ? 'btn-warning' : 'btn-outline-warning'"
           @click="handleCollect"
+          :title="$t('forum.answer.collect')"
         >
           <i class="bi" :class="answer.is_collected ? 'bi-star-fill' : 'bi-star'"></i>
         </button>
@@ -71,11 +73,14 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { renderMarkdown } from '../../utils/markdown'
 import { useUserStore } from '../../stores/user'
 import { formatTime } from '../../utils/format'
 import VoteButton from './VoteButton.vue'
 import CommentList from './CommentList.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   answer: {
@@ -115,7 +120,7 @@ function handleEdit() {
 }
 
 function handleDelete() {
-  if (confirm('确定要删除这条回答吗？')) {
+  if (confirm(t('forum.answer.confirmDelete'))) {
     emit('delete', props.answer.id)
   }
 }

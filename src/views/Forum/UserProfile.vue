@@ -7,52 +7,70 @@
           <!-- 用户信息卡片 -->
           <div v-if="loading" class="text-center py-5">
             <div class="spinner-border" role="status">
-              <span class="visually-hidden">加载中...</span>
+              <span class="visually-hidden">{{ $t('common.loading') }}</span>
             </div>
           </div>
 
           <div v-else-if="user" class="card mb-4">
             <div class="card-body">
               <div class="d-flex align-items-start">
-                <img 
-                  v-if="user.avatar" 
-                  :src="user.avatar" 
-                  class="rounded-circle me-4"
-                  style="width: 80px; height: 80px;"
-                  alt="avatar"
-                >
+                <div class="me-4">
+                  <img 
+                    v-if="user.avatar" 
+                    :src="user.avatar" 
+                    class="rounded-circle"
+                    style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #dee2e6;"
+                    alt="avatar"
+                  >
+                  <i v-else class="bi bi-person-circle d-block" style="font-size: 120px; color: #dee2e6;"></i>
+                </div>
                 <div class="flex-grow-1">
-                  <h3 class="mb-2">{{ user.username }}</h3>
+                  <h2 class="mb-2">{{ user.username }}</h2>
                   <p class="text-muted mb-3" v-if="user.bio">
                     {{ user.bio }}
                   </p>
                   <div class="d-flex align-items-center gap-4 mb-3">
-                    <div>
-                      <div class="fw-bold">{{ user.follow_count || 0 }}</div>
-                      <div class="text-muted small">关注</div>
+                    <div class="text-center" style="cursor: pointer;" @click="switchTab('questions')">
+                      <div class="fw-bold fs-5">{{ user.question_count || 0 }}</div>
+                      <div class="text-muted small">{{ $t('forum.userProfile.questions') }}</div>
                     </div>
-                    <div>
-                      <div class="fw-bold">{{ user.follower_count || 0 }}</div>
-                      <div class="text-muted small">粉丝</div>
+                    <div class="text-center" style="cursor: pointer;" @click="switchTab('answers')">
+                      <div class="fw-bold fs-5">{{ user.answer_count || 0 }}</div>
+                      <div class="text-muted small">{{ $t('forum.userProfile.answers') }}</div>
                     </div>
-                    <div>
-                      <div class="fw-bold">{{ user.answer_count || 0 }}</div>
-                      <div class="text-muted small">回答</div>
+                    <div class="text-center">
+                      <div class="fw-bold fs-5">{{ user.vote_count || 0 }}</div>
+                      <div class="text-muted small">{{ $t('forum.userProfile.votes') }}</div>
                     </div>
-                    <div>
-                      <div class="fw-bold">{{ user.question_count || 0 }}</div>
-                      <div class="text-muted small">提问</div>
+                    <div class="text-center" style="cursor: pointer;" @click="switchTab('collections')">
+                      <div class="fw-bold fs-5">{{ user.favorite_count || 0 }}</div>
+                      <div class="text-muted small">{{ $t('forum.userProfile.collections') }}</div>
+                    </div>
+                    <div class="text-center" style="cursor: pointer;" @click="switchTab('following')">
+                      <div class="fw-bold fs-5">{{ user.following_count || 0 }}</div>
+                      <div class="text-muted small">{{ $t('forum.userProfile.following') }}</div>
+                    </div>
+                    <div class="text-center" style="cursor: pointer;" @click="switchTab('followers')">
+                      <div class="fw-bold fs-5">{{ user.follower_count || 0 }}</div>
+                      <div class="text-muted small">{{ $t('forum.userProfile.followers') }}</div>
                     </div>
                   </div>
-                  <button 
-                    v-if="userStore.isLoggedIn && userStore.user?.id !== user.id"
-                    class="btn"
-                    :class="user.is_followed ? 'btn-primary' : 'btn-outline-primary'"
-                    @click="handleFollow"
-                  >
-                    <i class="bi" :class="user.is_followed ? 'bi-person-check-fill' : 'bi-person-plus'"></i>
-                    {{ user.is_followed ? '已关注' : '关注' }}
-                  </button>
+                  <div class="d-flex align-items-center gap-2">
+                    <button 
+                      v-if="userStore.isLoggedIn && userStore.user?.id !== user.id"
+                      class="btn"
+                      :class="user.is_following ? 'btn-primary' : 'btn-outline-primary'"
+                      @click="handleFollow"
+                      :disabled="following"
+                    >
+                      <i class="bi" :class="user.is_following ? 'bi-person-check-fill' : 'bi-person-plus'"></i>
+                      {{ user.is_following ? $t('forum.userProfile.followed') : $t('forum.userProfile.follow') }}
+                    </button>
+                    <span v-if="user.created_at" class="text-muted small">
+                      <i class="bi bi-calendar"></i>
+                      {{ $t('forum.user.registerTime') }} {{ formatTime(user.created_at) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -66,21 +84,35 @@
                 :class="{ active: activeTab === 'questions' }"
                 @click="switchTab('questions')"
               >
-                提问
+                {{ $t('forum.userProfile.questions') }}
               </button>
               <button 
                 class="btn btn-outline-secondary"
                 :class="{ active: activeTab === 'answers' }"
                 @click="switchTab('answers')"
               >
-                回答
+                {{ $t('forum.userProfile.answers') }}
               </button>
               <button 
                 class="btn btn-outline-secondary"
                 :class="{ active: activeTab === 'collections' }"
                 @click="switchTab('collections')"
               >
-                收藏
+                {{ $t('forum.userProfile.collections') }}
+              </button>
+              <button 
+                class="btn btn-outline-secondary"
+                :class="{ active: activeTab === 'following' }"
+                @click="switchTab('following')"
+              >
+                {{ $t('forum.userProfile.following') }}
+              </button>
+              <button 
+                class="btn btn-outline-secondary"
+                :class="{ active: activeTab === 'followers' }"
+                @click="switchTab('followers')"
+              >
+                {{ $t('forum.userProfile.followers') }}
               </button>
             </div>
           </div>
@@ -88,13 +120,13 @@
           <!-- 内容列表 -->
           <div v-if="contentLoading" class="text-center py-3">
             <div class="spinner-border spinner-border-sm" role="status">
-              <span class="visually-hidden">加载中...</span>
+              <span class="visually-hidden">{{ $t('common.loading') }}</span>
             </div>
           </div>
 
           <div v-else-if="activeTab === 'questions'">
             <div v-if="questions.length === 0" class="text-center py-5 text-muted">
-              暂无提问
+              {{ $t('forum.userProfile.noQuestions') }}
             </div>
             <QuestionCard 
               v-for="question in questions" 
@@ -105,7 +137,7 @@
 
           <div v-else-if="activeTab === 'answers'">
             <div v-if="answers.length === 0" class="text-center py-5 text-muted">
-              暂无回答
+              {{ $t('forum.userProfile.noAnswers') }}
             </div>
             <div 
               v-for="answer in answers" 
@@ -138,25 +170,74 @@
 
           <div v-else-if="activeTab === 'collections'">
             <div v-if="collections.length === 0" class="text-center py-5 text-muted">
-              暂无收藏
+              {{ $t('forum.userProfile.noCollections') }}
             </div>
-            <div 
+            <QuestionCard 
               v-for="item in collections" 
               :key="item.id"
+              :question="item"
+            />
+          </div>
+          
+          <div v-else-if="activeTab === 'following'">
+            <div v-if="followingList.length === 0" class="text-center py-5 text-muted">
+              {{ $t('forum.userProfile.noFollowing') }}
+            </div>
+            <div 
+              v-for="followUser in followingList" 
+              :key="followUser.id"
               class="card mb-3"
             >
-              <div class="card-body">
-                <div class="mb-2">
+              <div class="card-body d-flex align-items-center">
+                <img 
+                  v-if="followUser.avatar" 
+                  :src="followUser.avatar" 
+                  class="rounded-circle me-3"
+                  style="width: 48px; height: 48px;"
+                  alt="avatar"
+                >
+                <div class="flex-grow-1">
                   <router-link 
-                    :to="`/forum/question/${item.target_id}`"
+                    :to="`/forum/user/${followUser.id}`"
                     class="text-decoration-none fw-bold"
                   >
-                    {{ item.target?.title || '已删除' }}
+                    {{ followUser.username }}
                   </router-link>
+                  <div class="text-muted small" v-if="followUser.created_at">
+                    {{ $t('forum.user.registerTime') }} {{ formatTime(followUser.created_at) }}
+                  </div>
                 </div>
-                <div class="text-muted small">
-                  <i class="bi bi-clock"></i>
-                  {{ formatTime(item.created_at) }}
+              </div>
+            </div>
+          </div>
+          
+          <div v-else-if="activeTab === 'followers'">
+            <div v-if="followersList.length === 0" class="text-center py-5 text-muted">
+              {{ $t('forum.userProfile.noFollowers') }}
+            </div>
+            <div 
+              v-for="follower in followersList" 
+              :key="follower.id"
+              class="card mb-3"
+            >
+              <div class="card-body d-flex align-items-center">
+                <img 
+                  v-if="follower.avatar" 
+                  :src="follower.avatar" 
+                  class="rounded-circle me-3"
+                  style="width: 48px; height: 48px;"
+                  alt="avatar"
+                >
+                <div class="flex-grow-1">
+                  <router-link 
+                    :to="`/forum/user/${follower.id}`"
+                    class="text-decoration-none fw-bold"
+                  >
+                    {{ follower.username }}
+                  </router-link>
+                  <div class="text-muted small" v-if="follower.created_at">
+                    注册于 {{ formatTime(follower.created_at) }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -170,6 +251,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import Footer from '../../components/Footer.vue'
@@ -181,6 +263,8 @@ import { formatTime } from '../../utils/format'
 import { showToast } from '../../utils/toast'
 import QuestionCard from '../../components/Forum/QuestionCard.vue'
 
+const { t } = useI18n()
+
 const route = useRoute()
 const userStore = useUserStore()
 const forumStore = useForumStore()
@@ -191,7 +275,10 @@ const activeTab = ref('questions')
 const questions = ref([])
 const answers = ref([])
 const collections = ref([])
+const followingList = ref([])
+const followersList = ref([])
 const contentLoading = ref(false)
+const following = ref(false)
 
 onMounted(() => {
   loadUser()
@@ -217,11 +304,11 @@ async function loadUser() {
     if (response.code === 200) {
       user.value = response.data
     } else {
-      showToast(response.message || '获取用户信息失败', 'error')
+      showToast(response.message || t('errors.unknown'), 'error')
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
-    showToast('获取用户信息失败', 'error')
+    showToast(t('errors.unknown'), 'error')
   } finally {
     loading.value = false
   }
@@ -248,6 +335,16 @@ async function loadContent() {
       if (response.code === 200) {
         collections.value = response.data || []
       }
+    } else if (activeTab.value === 'following') {
+      const response = await forumUserApi.getFollowing(id)
+      if (response.code === 200) {
+        followingList.value = response.data || []
+      }
+    } else if (activeTab.value === 'followers') {
+      const response = await forumUserApi.getFollowers(id)
+      if (response.code === 200) {
+        followersList.value = response.data || []
+      }
     }
   } catch (error) {
     console.error('获取内容失败:', error)
@@ -258,21 +355,27 @@ async function loadContent() {
 
 function switchTab(tab) {
   activeTab.value = tab
+  loadContent()
 }
 
 async function handleFollow() {
   if (!userStore.isLoggedIn) {
-    showToast('请先登录', 'warning')
+    showToast(t('auth.loginRequired'), 'warning')
     return
   }
   
-  await forumStore.followUser(user.value.id)
-  // 更新本地状态
-  if (user.value) {
-    user.value.is_followed = !user.value.is_followed
-    user.value.follower_count = user.value.is_followed 
-      ? (user.value.follower_count || 0) + 1 
-      : Math.max(0, (user.value.follower_count || 0) - 1)
+  if (following.value) return
+  following.value = true
+  try {
+    const result = await forumStore.followUser(user.value.id)
+    // 更新本地状态
+    if (user.value && result) {
+      user.value.is_following = result.is_following
+      user.value.follower_count = result.follower_count || user.value.follower_count
+      user.value.following_count = result.following_count || user.value.following_count
+    }
+  } finally {
+    following.value = false
   }
 }
 
@@ -294,4 +397,5 @@ function truncateContent(content) {
   color: white;
 }
 </style>
+
 
