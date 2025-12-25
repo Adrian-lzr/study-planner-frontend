@@ -2,7 +2,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
       <router-link class="navbar-brand" to="/">
-        <i class="bi bi-book"></i> 智能学习计划生成器
+        <i class="bi bi-book"></i> {{ $t('nav.title') }}
       </router-link>
       <button
         class="navbar-toggler"
@@ -15,23 +15,23 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <router-link class="nav-link" to="/forum">论坛</router-link>
+            <router-link class="nav-link" to="/forum">{{ $t('nav.forum') }}</router-link>
           </li>
           <li v-if="isLoggedIn" class="nav-item">
-            <router-link class="nav-link" to="/dashboard">仪表盘</router-link>
+            <router-link class="nav-link" to="/dashboard">{{ $t('nav.dashboard') }}</router-link>
           </li>
           <li v-if="isLoggedIn" class="nav-item">
-            <router-link class="nav-link" to="/create-plan">创建计划</router-link>
+            <router-link class="nav-link" to="/create-plan">{{ $t('nav.createPlan') }}</router-link>
           </li>
           <li v-if="isLoggedIn" class="nav-item">
-            <router-link class="nav-link" to="/my-plans">我的计划</router-link>
+            <router-link class="nav-link" to="/my-plans">{{ $t('nav.myPlans') }}</router-link>
           </li>
           <li v-if="isLoggedIn" class="nav-item">
-            <router-link class="nav-link" to="/ai-assistant">AI助手</router-link>
+            <router-link class="nav-link" to="/ai-assistant">{{ $t('nav.aiAssistant') }}</router-link>
           </li>
           <li v-if="isLoggedIn" class="nav-item">
             <router-link class="nav-link" to="/chat">
-              <i class="bi bi-chat-dots"></i> 聊天室
+              <i class="bi bi-chat-dots"></i> {{ $t('nav.chatRoom') }}
             </router-link>
           </li>
         </ul>
@@ -60,18 +60,18 @@
               <ul class="dropdown-menu dropdown-menu-end" :class="{ show: isDropdownOpen }">
                 <li>
                   <router-link class="dropdown-item" to="/profile" @click="isDropdownOpen = false">
-                    <i class="bi bi-person"></i> 个人资料
+                    <i class="bi bi-person"></i> {{ $t('nav.profile') }}
                   </router-link>
                 </li>
                 <li>
                   <router-link class="dropdown-item" to="/forum/my-content">
-                    <i class="bi bi-file-text"></i> 我的内容
+                    <i class="bi bi-file-text"></i> {{ $t('forum.myContent.title') }}
                   </router-link>
                 </li>
                 <li><hr class="dropdown-divider" /></li>
                 <li>
                   <a class="dropdown-item" href="#" @click.prevent="handleLogout">
-                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                    <i class="bi bi-box-arrow-right"></i> {{ $t('nav.logout') }}
                   </a>
                 </li>
               </ul>
@@ -79,12 +79,15 @@
           </template>
           <template v-else>
             <li class="nav-item">
-              <router-link class="nav-link" to="/login">登录</router-link>
+              <router-link class="nav-link" to="/login">{{ $t('nav.login') }}</router-link>
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/register">注册</router-link>
+              <router-link class="nav-link" to="/register">{{ $t('nav.register') }}</router-link>
             </li>
           </template>
+          <li class="nav-item ms-2">
+            <LanguageSwitcher />
+          </li>
         </ul>
       </div>
     </div>
@@ -95,6 +98,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
+import LanguageSwitcher from './LanguageSwitcher.vue'
 
 const router = useRouter()
 const userStore = useUserStore()

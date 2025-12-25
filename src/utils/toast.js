@@ -1,11 +1,26 @@
 import { Toast } from 'bootstrap'
+import i18n from '../i18n'
 
 /**
  * 显示提示消息
- * @param {string} message - 提示消息
+ * @param {string} message - 提示消息（可以是i18n键或普通文本）
  * @param {string} type - 消息类型: success, error, warning, info
  */
 export function showToast(message, type = 'info') {
+  // 如果message看起来像i18n键（包含点号），尝试翻译
+  let displayMessage = message
+  if (message && message.includes('.')) {
+    try {
+      const translated = i18n.global.t(message)
+      // 如果翻译结果和原文本不同，说明翻译成功
+      if (translated !== message) {
+        displayMessage = translated
+      }
+    } catch (e) {
+      // 翻译失败，使用原文本
+      displayMessage = message
+    }
+  }
   let toastContainer = document.getElementById('toastContainer')
   if (!toastContainer) {
     toastContainer = document.createElement('div')
@@ -26,7 +41,7 @@ export function showToast(message, type = 'info') {
   const toastHtml = `
     <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
       <div class="toast-body d-flex justify-content-between align-items-center">
-        ${message}
+        ${displayMessage}
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
       </div>
     </div>

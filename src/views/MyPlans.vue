@@ -5,16 +5,16 @@
     <div class="container my-5 flex-grow-1">
       <!-- 页面标题 -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-journal-text"></i> 我的学习计划</h2>
+        <h2><i class="bi bi-journal-text"></i> {{ $t('myPlans.title') }}</h2>
         <router-link to="/create-plan" class="btn btn-primary">
-          <i class="bi bi-plus-lg"></i> 创建新计划
+          <i class="bi bi-plus-lg"></i> {{ $t('myPlans.createNew') }}
         </router-link>
       </div>
 
       <!-- 加载状态 -->
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 text-muted">正在加载您的计划...</p>
+        <p class="mt-2 text-muted">{{ $t('myPlans.loading') }}</p>
       </div>
 
       <template v-else>
@@ -29,7 +29,7 @@
                   <input 
                     type="text" 
                     class="form-control" 
-                    placeholder="搜索计划标题或目标..." 
+                    :placeholder="$t('myPlans.searchPlaceholder')" 
                     v-model="searchKeyword"
                   />
                   <button 
@@ -50,21 +50,21 @@
                     :class="['btn', selectedStatus === '' ? 'btn-primary' : 'btn-outline-primary']"
                     @click="selectedStatus = ''"
                   >
-                    <i class="bi bi-list-ul"></i> 全部
+                    <i class="bi bi-list-ul"></i> {{ $t('myPlans.all') }}
                   </button>
                   <button 
                     type="button" 
-                    :class="['btn', selectedStatus === '进行中' ? 'btn-success' : 'btn-outline-success']"
-                    @click="selectedStatus = '进行中'"
+                    :class="['btn', selectedStatus === t('plan.inProgress') ? 'btn-success' : 'btn-outline-success']"
+                    @click="selectedStatus = t('plan.inProgress')"
                   >
-                    <i class="bi bi-play-circle"></i> 进行中
+                    <i class="bi bi-play-circle"></i> {{ $t('myPlans.inProgress') }}
                   </button>
                   <button 
                     type="button" 
-                    :class="['btn', selectedStatus === '已完成' ? 'btn-info' : 'btn-outline-info']"
-                    @click="selectedStatus = '已完成'"
+                    :class="['btn', selectedStatus === t('plan.completed') ? 'btn-info' : 'btn-outline-info']"
+                    @click="selectedStatus = t('plan.completed')"
                   >
-                    <i class="bi bi-check-circle"></i> 已完成
+                    <i class="bi bi-check-circle"></i> {{ $t('myPlans.completed') }}
                   </button>
                 </div>
               </div>
@@ -72,12 +72,12 @@
             <!-- 筛选结果统计 -->
             <div v-if="selectedStatus || searchKeyword" class="mt-3 text-muted small">
               <i class="bi bi-funnel"></i> 
-              显示 {{ filteredPlans.length }} / {{ plans.length }} 个计划
+              {{ $t('myPlans.filterResult', { filtered: filteredPlans.length, total: plans.length }) }}
               <button 
                 class="btn btn-link btn-sm p-0 ms-2" 
                 @click="clearFilters"
               >
-                清除筛选
+                {{ $t('myPlans.clearFilter') }}
               </button>
             </div>
           </div>
@@ -86,20 +86,20 @@
         <!-- 空状态 -->
         <div v-if="plans.length === 0" class="empty-state">
           <i class="bi bi-journal-x"></i>
-          <h4>还没有学习计划</h4>
-          <p class="text-muted">创建您的第一个智能学习计划，让AI帮您规划学习路径</p>
+          <h4>{{ $t('myPlans.noPlans') }}</h4>
+          <p class="text-muted">{{ $t('myPlans.noPlansDesc') }}</p>
           <router-link to="/create-plan" class="btn btn-primary btn-lg mt-3">
-            <i class="bi bi-plus-lg"></i> 创建计划
+            <i class="bi bi-plus-lg"></i> {{ $t('myPlans.createNew') }}
           </router-link>
         </div>
 
         <!-- 筛选后无结果 -->
         <div v-else-if="filteredPlans.length === 0" class="empty-state">
           <i class="bi bi-search"></i>
-          <h4>没有找到匹配的计划</h4>
-          <p class="text-muted">请尝试调整搜索关键词或筛选条件</p>
+          <h4>{{ $t('myPlans.noMatch') }}</h4>
+          <p class="text-muted">{{ $t('myPlans.noMatchDesc') }}</p>
           <button class="btn btn-primary btn-lg mt-3" @click="clearFilters">
-            <i class="bi bi-x-circle"></i> 清除筛选
+            <i class="bi bi-x-circle"></i> {{ $t('myPlans.clearFilter') }}
           </button>
         </div>
 
@@ -110,7 +110,7 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <h5 class="card-title mb-0">
-                  <i v-if="isPinned(plan.id)" class="bi bi-pin-angle-fill text-warning me-1" title="已置顶"></i>
+                  <i v-if="isPinned(plan.id)" class="bi bi-pin-angle-fill text-warning me-1" :title="$t('myPlans.pinned')"></i>
                   {{ plan.subject || plan.title }}
                 </h5>
                 <span :class="['badge', getStatusClass(plan.status)]">
@@ -119,36 +119,36 @@
               </div>
               <p class="card-text text-muted small">
                 <i class="bi bi-calendar"></i> {{ formatDate(plan.createTime) }}
-                <span class="ms-2"><i class="bi bi-clock"></i> {{ formatNumber(plan.duration || plan.totalDays || 0) }}天</span>
+                <span class="ms-2"><i class="bi bi-clock"></i> {{ formatNumber(plan.duration || plan.totalDays || 0) }}{{ $t('myPlans.days') }}</span>
               </p>
               <div class="mb-3">
                 <div class="d-flex justify-content-between small mb-1">
-                  <span>学习进度</span>
+                  <span>{{ $t('myPlans.learningProgress') }}</span>
                   <span>{{ formatNumber(plan.progress || 0) }}%</span>
                 </div>
                 <div class="progress">
                   <div class="progress-bar bg-success" :style="{ width: (plan.progress || 0) + '%' }"></div>
                 </div>
               </div>
-              <p class="card-text small">{{ truncateText(plan.goal || '暂无目标描述', 80) }}</p>
+              <p class="card-text small">{{ truncateText(plan.goal || $t('forum.myContent.noTarget'), 80) }}</p>
             </div>
             <div class="card-footer bg-transparent">
               <button class="btn btn-sm btn-outline-primary me-2" @click="viewDetail(plan.id)">
-                <i class="bi bi-eye"></i> 查看详情
+                <i class="bi bi-eye"></i> {{ $t('myPlans.viewDetail') }}
               </button>
               <button class="btn btn-sm btn-outline-secondary me-2" @click="openEditModal(plan)">
-                <i class="bi bi-pencil"></i> 编辑
+                <i class="bi bi-pencil"></i> {{ $t('myPlans.edit') }}
               </button>
               <button 
                 :class="['btn', 'btn-sm', isPinned(plan.id) ? 'btn-warning' : 'btn-outline-warning', 'me-2']" 
                 @click="togglePin(plan.id)"
-                :title="isPinned(plan.id) ? '取消置顶' : '置顶'"
+                :title="isPinned(plan.id) ? $t('myPlans.unpin') : $t('myPlans.pin')"
               >
                 <i :class="isPinned(plan.id) ? 'bi bi-pin-angle-fill' : 'bi bi-pin-angle'"></i> 
-                {{ isPinned(plan.id) ? '已置顶' : '置顶' }}
+                {{ isPinned(plan.id) ? $t('myPlans.pinned') : $t('myPlans.pin') }}
               </button>
               <button class="btn btn-sm btn-outline-danger" @click="deletePlan(plan.id)">
-                <i class="bi bi-trash"></i> 删除
+                <i class="bi bi-trash"></i> {{ $t('myPlans.delete') }}
               </button>
             </div>
           </div>
@@ -162,22 +162,22 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">编辑计划</h5>
+            <h5 class="modal-title">{{ $t('myPlans.editPlan') }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div class="mb-3">
-              <label for="planTitle" class="form-label">计划名称</label>
+              <label for="planTitle" class="form-label">{{ $t('myPlans.planName') }}</label>
               <input type="text" class="form-control" id="planTitle" v-model="editingPlan.title">
             </div>
             <div class="mb-3">
-              <label for="planGoal" class="form-label">学习目标</label>
+              <label for="planGoal" class="form-label">{{ $t('plan.target') }}</label>
               <textarea class="form-control" id="planGoal" rows="3" v-model="editingPlan.goal"></textarea>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-            <button type="button" class="btn btn-primary" @click="savePlan">保存</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('common.cancel') }}</button>
+            <button type="button" class="btn btn-primary" @click="savePlan">{{ $t('common.save') }}</button>
           </div>
         </div>
       </div>
@@ -189,6 +189,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { Modal } from 'bootstrap'
 import Navbar from '../components/Navbar.vue'
@@ -197,6 +198,7 @@ import { planApi } from '../api/plan'
 import { showToast } from '../utils/toast'
 import { formatDate, truncateText, formatNumber } from '../utils/format'
 
+const { t } = useI18n()
 const router = useRouter()
 const loading = ref(true)
 const plans = ref([])
@@ -241,11 +243,11 @@ function togglePin(planId) {
   if (index > -1) {
     // 取消置顶
     pinnedList.splice(index, 1)
-    showToast('已取消置顶', 'success')
+    showToast(t('myPlans.unpin') + ' ' + t('common.success'), 'success')
   } else {
     // 置顶
     pinnedList.push(planId)
-    showToast('已置顶', 'success')
+    showToast(t('myPlans.pinned'), 'success')
   }
   
   savePinnedPlans(pinnedList)
@@ -273,7 +275,15 @@ const filteredPlans = computed(() => {
   
   // 状态筛选
   if (selectedStatus.value) {
-    result = result.filter(plan => plan.status === selectedStatus.value)
+    result = result.filter(plan => {
+      // 支持中英文状态匹配
+      const statusMap = {
+        [t('plan.inProgress')]: ['进行中', 'active', t('plan.inProgress')],
+        [t('plan.completed')]: ['已完成', 'completed', t('plan.completed')]
+      }
+      const statusValues = statusMap[selectedStatus.value] || [selectedStatus.value]
+      return statusValues.includes(plan.status)
+    })
   }
   
   // 搜索筛选
@@ -324,15 +334,15 @@ async function savePlan() {
       goal: editingPlan.value.goal
     })
     if (result && result.code === 200) {
-      showToast('计划更新成功', 'success')
+      showToast(t('myPlans.planUpdateSuccess'), 'success')
       editModalInstance.hide()
       loadPlans()
     } else {
-      showToast(result?.message || '更新失败', 'error')
+      showToast(result?.message || t('profile.updateFailed'), 'error')
     }
   } catch (error) {
     console.error('更新失败:', error)
-    showToast('更新失败', 'error')
+    showToast(t('profile.updateFailed'), 'error')
   }
 }
 
@@ -353,7 +363,7 @@ async function loadPlans() {
     }
   } catch (error) {
     console.error('加载计划失败:', error)
-    showToast('加载失败', 'error')
+    showToast(t('myPlans.loadFailed'), 'error')
   } finally {
     loading.value = false
   }
@@ -373,9 +383,9 @@ function getStatusClass(status) {
 
 function getStatusText(status) {
   const map = {
-    'active': '进行中',
-    'completed': '已完成',
-    'paused': '已暂停'
+    'active': t('plan.inProgress'),
+    'completed': t('plan.completed'),
+    'paused': t('plan.notStarted')
   }
   return map[status] || status
 }
@@ -385,7 +395,7 @@ async function viewDetail(planId) {
 }
 
 async function deletePlan(planId) {
-  if (!confirm('确定要删除这个计划吗？此操作不可撤销。')) {
+  if (!confirm(t('myPlans.confirmDeletePlan'))) {
     return
   }
 
@@ -400,14 +410,14 @@ async function deletePlan(planId) {
         savePinnedPlans(pinnedList)
       }
       
-      showToast('计划已删除', 'success')
+      showToast(t('myPlans.planDeleted'), 'success')
       loadPlans()
     } else {
-      showToast(result?.message || '删除失败', 'error')
+      showToast(result?.message || t('myPlans.deleteFailed'), 'error')
     }
   } catch (error) {
     console.error('删除失败:', error)
-    showToast('删除失败', 'error')
+    showToast(t('myPlans.deleteFailed'), 'error')
   }
 }
 </script>

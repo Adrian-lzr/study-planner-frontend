@@ -21,7 +21,7 @@
           <div class="d-flex align-items-center text-muted small">
             <span class="me-3">
               <i class="bi bi-person"></i>
-              {{ question.author?.username || '匿名用户' }}
+              {{ question.author?.username || $t('forum.questionCard.anonymousUser') }}
             </span>
             <span class="me-3">
               <i class="bi bi-clock"></i>
@@ -29,16 +29,29 @@
             </span>
             <span class="me-3">
               <i class="bi bi-chat-dots"></i>
-              {{ question.answer_count || 0 }} 回答
+              {{ question.answer_count || 0 }} {{ $t('forum.questionCard.answers') }}
             </span>
             <span class="me-3">
               <i class="bi bi-eye"></i>
-              {{ question.view_count || 0 }} 浏览
+              {{ question.view_count || 0 }} {{ $t('forum.questionCard.views') }}
             </span>
-            <span v-if="question.follow_count">
+            <span v-if="question.follow_count" class="me-3">
               <i class="bi bi-heart"></i>
-              {{ question.follow_count }} 关注
+              {{ question.follow_count }} {{ $t('forum.questionCard.follows') }}
             </span>
+            <span v-if="question.favorite_count" class="me-3">
+              <i class="bi bi-star"></i>
+              {{ question.favorite_count }} {{ $t('forum.questionCard.favorites') }}
+            </span>
+            <button 
+              v-if="userStore.isLoggedIn"
+              class="btn btn-sm btn-link p-0 text-decoration-none me-2"
+              @click="handleFavorite"
+              :disabled="favoriting"
+              :title="$t('forum.questionCard.favorite')"
+            >
+              <i class="bi" :class="question.is_favorited ? 'bi-star-fill text-warning' : 'bi-star'"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -47,9 +60,15 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import TopicTag from './TopicTag.vue'
 import { formatTime } from '../../utils/format'
+import { useUserStore } from '../../stores/user'
+import { useForumStore } from '../../stores/forum'
+import { showToast } from '../../utils/toast'
+
+const { t } = useI18n()
 
 const props = defineProps({
   question: {
@@ -58,11 +77,31 @@ const props = defineProps({
   }
 })
 
+const userStore = useUserStore()
+const forumStore = useForumStore()
+const favoriting = ref(false)
+
 function truncateContent(content) {
   if (!content) return ''
   // 移除 Markdown 标记
   const text = content.replace(/[#*`\[\]()]/g, '').trim()
   return text.length > 150 ? text.substring(0, 150) + '...' : text
+}
+
+async function handleFavorite(e) {
+  e.stopPropagation()
+  if (!userStore.isLoggedIn) {
+    showToast(t('auth.loginRequired'), 'warning')
+    return
+  }
+  
+  if (favoriting.value) return
+  favoriting.value = true
+  try {
+    await forumStore.favoriteQuestion(props.question.id)
+  } finally {
+    favoriting.value = false
+  }
 }
 </script>
 

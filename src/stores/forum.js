@@ -10,6 +10,7 @@ import {
   interactionApi 
 } from '../api/forum'
 import { showToast } from '../utils/toast'
+import i18n from '../i18n'
 
 export const useForumStore = defineStore('forum', () => {
   // 状态
@@ -22,6 +23,8 @@ export const useForumStore = defineStore('forum', () => {
   const myQuestions = ref([])
   const myAnswers = ref([])
   const myCollections = ref([])
+  const myFollowing = ref({ questions: [], topics: [], users: [] })
+  const myFollowers = ref([])
   const loading = ref(false)
 
   // 获取问题列表
@@ -31,14 +34,16 @@ export const useForumStore = defineStore('forum', () => {
       const response = await questionApi.getQuestions(params)
       if (response.code === 200) {
         questions.value = response.data || []
-        return response.data
+        return response.data || []
       } else {
         showToast(response.message || '获取问题列表失败', 'error')
+        questions.value = []
         return []
       }
     } catch (error) {
       console.error('获取问题列表失败:', error)
       showToast('获取问题列表失败', 'error')
+      questions.value = []
       return []
     } finally {
       loading.value = false
@@ -140,12 +145,20 @@ export const useForumStore = defineStore('forum', () => {
   async function voteAnswer(id) {
     try {
       const response = await answerApi.voteAnswer(id)
-      if (response.code === 200) {
+      if (response.code === 200 && response.data) {
         // 更新本地状态
         const answer = answers.value.find(a => a.id === id)
         if (answer) {
-          answer.vote_count = response.data.vote_count
-          answer.is_voted = response.data.is_voted
+          answer.vote_count = response.data.vote_count || answer.vote_count
+          answer.is_voted = response.data.is_voted !== undefined ? response.data.is_voted : !answer.is_voted
+        }
+        // 同时更新currentQuestion中的answers（如果存在）
+        if (currentQuestion.value && currentQuestion.value.answers) {
+          const qAnswer = currentQuestion.value.answers.find(a => a.id === id)
+          if (qAnswer) {
+            qAnswer.vote_count = response.data.vote_count || qAnswer.vote_count
+            qAnswer.is_voted = response.data.is_voted !== undefined ? response.data.is_voted : !qAnswer.is_voted
+          }
         }
         return response.data
       } else {
@@ -182,9 +195,16 @@ export const useForumStore = defineStore('forum', () => {
     try {
       const response = await questionApi.followQuestion(id)
       if (response.code === 200) {
+        showToast(response.data.is_followed ? '关注成功' : '取消关注成功', 'success')
         if (currentQuestion.value && currentQuestion.value.id === id) {
           currentQuestion.value.follow_count = response.data.follow_count
           currentQuestion.value.is_followed = response.data.is_followed
+        }
+        // 更新列表中的状态
+        const question = questions.value.find(q => q.id === id)
+        if (question) {
+          question.follow_count = response.data.follow_count
+          question.is_followed = response.data.is_followed
         }
         return response.data
       } else {
@@ -197,13 +217,86 @@ export const useForumStore = defineStore('forum', () => {
       return null
     }
   }
+  
+  // 收藏帖子
+  async function favoriteQuestion(id) {
+    try {
+      const response = await questionApi.favoriteQuestion(id)
+      if (response.code === 200) {
+        showToast(response.data.is_favorited ? '收藏成功' : '取消收藏成功', 'success')
+        // 更新列表中的状态
+        const question = questions.value.find(q => q.id === id)
+        if (question) {
+          question.is_favorited = response.data.is_favorited
+          question.favorite_count = response.data.favorite_count
+        }
+        // 更新详情页状态
+        if (currentQuestion.value && currentQuestion.value.id === id) {
+          currentQuestion.value.is_favorited = response.data.is_favorited
+          currentQuestion.value.favorite_count = response.data.favorite_count
+        }
+        // 更新我的收藏列表
+        const myCollection = myCollections.value.find(q => q.id === id)
+        if (myCollection) {
+          if (!response.data.is_favorited) {
+            // 如果取消收藏，从列表中移除
+            const index = myCollections.value.findIndex(q => q.id === id)
+            if (index > -1) {
+              myCollections.value.splice(index, 1)
+            }
+          } else {
+            myCollection.is_favorited = response.data.is_favorited
+            myCollection.favorite_count = response.data.favorite_count
+          }
+        }
+        return response.data
+      } else {
+        showToast(response.message || '操作失败', 'error')
+        return null
+      }
+    } catch (error) {
+      console.error('收藏失败:', error)
+      showToast('操作失败', 'error')
+      return null
+    }
+  }
+
+  // 点赞问题
+  async function voteQuestion(id) {
+    try {
+      const response = await questionApi.voteQuestion(id)
+      if (response.code === 200 && response.data) {
+        showToast(response.data.is_voted ? '点赞成功' : '取消点赞成功', 'success')
+        // 更新列表中的状态
+        const question = questions.value.find(q => q.id === id)
+        if (question) {
+          question.is_voted = response.data.is_voted
+          question.vote_count = response.data.vote_count
+        }
+        // 更新详情页状态
+        if (currentQuestion.value && currentQuestion.value.id === id) {
+          currentQuestion.value.is_voted = response.data.is_voted
+          currentQuestion.value.vote_count = response.data.vote_count
+        }
+        return response.data
+      } else {
+        showToast(response.message || '操作失败', 'error')
+        return null
+      }
+    } catch (error) {
+      console.error('点赞失败:', error)
+      showToast('操作失败', 'error')
+      return null
+    }
+  }
 
   // 关注话题
   async function followTopic(id) {
     try {
       const response = await topicApi.followTopic(id)
-      if (response.code === 200) {
-        showToast(response.data.is_followed ? '关注成功' : '取消关注成功', 'success')
+      if (response.code === 200 && response.data) {
+        const isFollowed = response.data.is_followed !== undefined ? response.data.is_followed : response.data.is_following
+        showToast(isFollowed ? '关注成功' : '取消关注成功', 'success')
         return response.data
       } else {
         showToast(response.message || '操作失败', 'error')
@@ -221,7 +314,7 @@ export const useForumStore = defineStore('forum', () => {
     try {
       const response = await forumUserApi.followUser(id)
       if (response.code === 200) {
-        showToast(response.data.is_followed ? '关注成功' : '取消关注成功', 'success')
+        showToast(response.data.is_following ? '关注成功' : '取消关注成功', 'success')
         return response.data
       } else {
         showToast(response.message || '操作失败', 'error')
@@ -240,11 +333,15 @@ export const useForumStore = defineStore('forum', () => {
       const response = await topicApi.getHotTopics()
       if (response.code === 200) {
         hotTopics.value = response.data || []
-        return response.data
+        return response.data || []
+      } else {
+        console.warn('获取热门话题失败:', response.message)
+        hotTopics.value = []
+        return []
       }
-      return []
     } catch (error) {
       console.error('获取热门话题失败:', error)
+      hotTopics.value = []
       return []
     }
   }
@@ -341,6 +438,52 @@ export const useForumStore = defineStore('forum', () => {
     }
   }
 
+  // 获取我的关注
+  async function fetchMyFollowing(params = {}) {
+    try {
+      loading.value = true
+      const response = await interactionApi.getMyFollowing(params)
+      if (response.code === 200) {
+        myFollowing.value = response.data || { questions: [], topics: [], users: [] }
+        return response.data || { questions: [], topics: [], users: [] }
+      } else {
+        showToast(response.message || '获取失败', 'error')
+        myFollowing.value = { questions: [], topics: [], users: [] }
+        return { questions: [], topics: [], users: [] }
+      }
+    } catch (error) {
+      console.error('获取我的关注失败:', error)
+      showToast('获取失败', 'error')
+      myFollowing.value = { questions: [], topics: [], users: [] }
+      return { questions: [], topics: [], users: [] }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 获取我的粉丝
+  async function fetchMyFollowers(params = {}) {
+    try {
+      loading.value = true
+      const response = await interactionApi.getMyFollowers(params)
+      if (response.code === 200) {
+        myFollowers.value = response.data || []
+        return response.data || []
+      } else {
+        showToast(response.message || '获取失败', 'error')
+        myFollowers.value = []
+        return []
+      }
+    } catch (error) {
+      console.error('获取我的粉丝失败:', error)
+      showToast('获取失败', 'error')
+      myFollowers.value = []
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     // 状态
     questions,
@@ -352,6 +495,8 @@ export const useForumStore = defineStore('forum', () => {
     myQuestions,
     myAnswers,
     myCollections,
+    myFollowing,
+    myFollowers,
     loading,
     // 方法
     fetchQuestions,
@@ -362,13 +507,17 @@ export const useForumStore = defineStore('forum', () => {
     voteAnswer,
     collectAnswer,
     followQuestion,
+    voteQuestion,
     followTopic,
     followUser,
     fetchHotTopics,
     search,
     fetchMyQuestions,
     fetchMyAnswers,
-    fetchMyCollections
+    fetchMyCollections,
+    fetchMyFollowing,
+    fetchMyFollowers,
+    favoriteQuestion
   }
 })
 

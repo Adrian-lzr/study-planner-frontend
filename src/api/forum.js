@@ -53,6 +53,22 @@ export const questionApi = {
     })
   },
   
+  // 收藏/取消收藏帖子
+  favoriteQuestion(id) {
+    return request({
+      url: `/forum/question/${id}/favorite`,
+      method: 'post'
+    })
+  },
+  
+  // 点赞/取消点赞帖子
+  voteQuestion(id) {
+    return request({
+      url: `/forum/question/${id}/vote`,
+      method: 'post'
+    })
+  },
+  
   // 获取问题的回答列表
   getAnswers(questionId, params = {}) {
     return request({
@@ -334,6 +350,15 @@ export const interactionApi = {
   getMyFollowing(params = {}) {
     return request({
       url: '/forum/my/following',
+      method: 'get',
+      params
+    })
+  },
+  
+  // 我的粉丝
+  getMyFollowers(params = {}) {
+    return request({
+      url: '/forum/my/followers',
       method: 'get',
       params
     })

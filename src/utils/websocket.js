@@ -1,6 +1,7 @@
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { showToast } from './toast'
+import i18n from '../i18n'
 
 class WebSocketManager {
   constructor() {
@@ -79,7 +80,7 @@ class WebSocketManager {
               this.connect(token)
             }, this.reconnectDelay)
           } else {
-            showToast('连接失败，请刷新页面重试', 'error')
+            showToast(i18n.global.t('chat.connectionFailed'), 'error')
           }
         }
       })
@@ -89,7 +90,7 @@ class WebSocketManager {
     } catch (error) {
       console.error('WebSocket连接失败:', error)
       this.isConnecting = false
-      showToast('连接失败', 'error')
+      showToast(i18n.global.t('chat.connectionFailed'), 'error')
     }
   }
 
@@ -141,7 +142,7 @@ class WebSocketManager {
         break
       case 'error':
         // 错误消息
-        showToast(payload.message || '服务器错误', 'error')
+        showToast(payload.message || i18n.global.t('errors.server'), 'error')
         this.emit('error', payload)
         break
       default:
@@ -152,7 +153,7 @@ class WebSocketManager {
   // 发送消息（防止重复发送）
   sendMessage(content) {
     if (!this.isConnected || !this.client?.connected) {
-      showToast('连接未建立，请稍后重试', 'warning')
+      showToast(i18n.global.t('chat.connectionNotEstablished'), 'warning')
       return false
     }
 
@@ -190,7 +191,7 @@ class WebSocketManager {
       return true
     } catch (error) {
       console.error('发送消息失败:', error)
-      showToast('发送失败', 'error')
+      showToast(i18n.global.t('chat.messageSendFailed'), 'error')
       return false
     }
   }

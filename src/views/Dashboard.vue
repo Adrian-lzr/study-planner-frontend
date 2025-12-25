@@ -6,8 +6,8 @@
       <!-- 欢迎信息 -->
       <div class="row mb-4">
         <div class="col">
-          <h4>欢迎回来，{{ user?.username }}！</h4>
-          <p class="text-muted">今天也要加油学习哦 💪</p>
+          <h4>{{ $t('dashboard.welcomeBack', { name: user?.username }) }}</h4>
+          <p class="text-muted">{{ $t('dashboard.motivation') }}</p>
         </div>
       </div>
 
@@ -18,7 +18,7 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
-                  <p class="text-muted mb-1">进行中的计划</p>
+                  <p class="text-muted mb-1">{{ $t('dashboard.activePlans') }}</p>
                   <h3 class="mb-0">{{ stats.activePlans || 0 }}</h3>
                 </div>
                 <i class="bi bi-journal-text fs-1 text-primary opacity-50"></i>
@@ -31,8 +31,8 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
-                  <p class="text-muted mb-1">累计打卡</p>
-                  <h3 class="mb-0">{{ stats.totalDays || 0 }} <small class="text-muted">天</small></h3>
+                  <p class="text-muted mb-1">{{ $t('dashboard.totalCheckIns') }}</p>
+                  <h3 class="mb-0">{{ stats.totalDays || 0 }} <small class="text-muted">{{ $t('dashboard.days') }}</small></h3>
                 </div>
                 <i class="bi bi-calendar-check fs-1 text-success opacity-50"></i>
               </div>
@@ -44,8 +44,8 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
-                  <p class="text-muted mb-1">连续打卡</p>
-                  <h3 class="mb-0">{{ stats.streakDays || 0 }} <small class="text-muted">天</small></h3>
+                  <p class="text-muted mb-1">{{ $t('dashboard.streakDays') }}</p>
+                  <h3 class="mb-0">{{ stats.streakDays || 0 }} <small class="text-muted">{{ $t('dashboard.days') }}</small></h3>
                 </div>
                 <i class="bi bi-fire fs-1 text-warning opacity-50"></i>
               </div>
@@ -57,8 +57,8 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
-                  <p class="text-muted mb-1">总学习时长</p>
-                  <h3 class="mb-0">{{ formatNumber(stats.totalHours) }} <small class="text-muted">h</small></h3>
+                  <p class="text-muted mb-1">{{ $t('dashboard.totalStudyHours') }}</p>
+                  <h3 class="mb-0">{{ formatNumber(stats.totalHours) }} <small class="text-muted">{{ $t('dashboard.hours') }}</small></h3>
                 </div>
                 <i class="bi bi-clock-history fs-1 text-info opacity-50"></i>
               </div>
@@ -79,26 +79,26 @@
         <div class="col-md-8">
           <div class="card today-task h-100">
             <div class="card-body">
-              <h5 class="card-title"><i class="bi bi-star-fill"></i> 今日任务</h5>
+              <h5 class="card-title"><i class="bi bi-star-fill"></i> {{ $t('dashboard.todayTask') }}</h5>
               <div v-if="loading" class="text-center py-4">
                 <div class="spinner-border text-light" role="status"></div>
               </div>
               <div v-else-if="todayTask">
                 <div class="mb-2">
-                  <span class="badge bg-light text-dark">第{{ todayTask.dayNumber }}天</span>
+                  <span class="badge bg-light text-dark">{{ $t('dashboard.dayNumber', { day: todayTask.dayNumber }) }}</span>
                 </div>
                 <p class="mb-3">{{ todayTask.content }}</p>
                 <div class="d-flex align-items-center">
-                  <span class="me-3"><i class="bi bi-clock"></i> {{ formatNumber(todayTask.duration) }}小时</span>
+                  <span class="me-3"><i class="bi bi-clock"></i> {{ formatNumber(todayTask.duration) }}{{ $t('dashboard.hours') }}</span>
                   <span v-if="todayTask.isCompleted" class="badge bg-success">
-                    <i class="bi bi-check"></i> 已完成
+                    <i class="bi bi-check"></i> {{ $t('dashboard.completed') }}
                   </span>
-                  <span v-else class="badge bg-warning">待完成</span>
+                  <span v-else class="badge bg-warning">{{ $t('dashboard.pending') }}</span>
                 </div>
               </div>
               <div v-else>
-                <p class="mb-0">暂无进行中的计划</p>
-                <router-link to="/create-plan" class="btn btn-light btn-sm mt-2">创建计划</router-link>
+                <p class="mb-0">{{ $t('dashboard.noActivePlans') }}</p>
+                <router-link to="/create-plan" class="btn btn-light btn-sm mt-2">{{ $t('dashboard.createPlan') }}</router-link>
               </div>
             </div>
           </div>
@@ -108,22 +108,22 @@
         <div class="col-md-4">
           <div class="card h-100">
             <div class="card-header">
-              <h6 class="mb-0"><i class="bi bi-lightning"></i> 快捷操作</h6>
+              <h6 class="mb-0"><i class="bi bi-lightning"></i> {{ $t('dashboard.quickActions') }}</h6>
             </div>
             <div class="card-body">
               <div class="d-grid gap-2">
                 <router-link to="/create-plan" class="btn btn-primary">
-                  <i class="bi bi-plus-circle"></i> 创建新计划
+                  <i class="bi bi-plus-circle"></i> {{ $t('dashboard.createNewPlan') }}
                 </router-link>
                 <button
                   class="btn btn-success"
                   :disabled="!todayTask || todayTask.isCompleted"
                   @click="quickCheckIn"
                 >
-                  <i class="bi bi-check-circle"></i> 今日打卡
+                  <i class="bi bi-check-circle"></i> {{ $t('dashboard.checkInToday') }}
                 </button>
                 <router-link to="/ai-assistant" class="btn btn-outline-primary">
-                  <i class="bi bi-robot"></i> 问AI助手
+                  <i class="bi bi-robot"></i> {{ $t('dashboard.askAI') }}
                 </router-link>
               </div>
             </div>
@@ -136,14 +136,14 @@
         <div class="col-12">
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <h6 class="mb-0"><i class="bi bi-journal-bookmark"></i> 我的学习计划</h6>
-              <router-link to="/my-plans" class="btn btn-sm btn-outline-primary">查看全部</router-link>
+              <h6 class="mb-0"><i class="bi bi-journal-bookmark"></i> {{ $t('dashboard.myStudyPlans') }}</h6>
+              <router-link to="/my-plans" class="btn btn-sm btn-outline-primary">{{ $t('dashboard.viewAll') }}</router-link>
             </div>
             <div class="card-body">
               <div v-if="plans.length === 0" class="text-center py-4">
                 <i class="bi bi-inbox fs-1 text-muted"></i>
-                <p class="text-muted mt-2">还没有学习计划，快去创建一个吧！</p>
-                <router-link to="/create-plan" class="btn btn-primary">创建计划</router-link>
+                <p class="text-muted mt-2">{{ $t('dashboard.noPlansYet') }}</p>
+                <router-link to="/create-plan" class="btn btn-primary">{{ $t('dashboard.createPlan') }}</router-link>
               </div>
               <div v-else>
                 <div
@@ -154,11 +154,11 @@
                   <div>
                     <h6 class="mb-1">{{ plan.title }}</h6>
                     <small class="text-muted">
-                      {{ plan.startDate }} ~ {{ plan.endDate }} | 每天{{ formatNumber(plan.dailyHours) }}小时
+                      {{ plan.startDate }} ~ {{ plan.endDate }} | {{ $t('dashboard.dailyHours', { hours: formatNumber(plan.dailyHours) }) }}
                     </small>
                   </div>
                   <span
-                    :class="['badge', plan.status === '进行中' ? 'bg-success' : 'bg-secondary']"
+                    :class="['badge', plan.status === t('plan.inProgress') ? 'bg-success' : 'bg-secondary']"
                   >
                     {{ plan.status }}
                   </span>
@@ -176,6 +176,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
 import StudyChart from '../components/StudyChart.vue'
@@ -185,6 +186,7 @@ import { checkinApi } from '../api/checkin'
 import { showToast } from '../utils/toast'
 import { formatNumber } from '../utils/format'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const user = computed(() => userStore.user)
 
@@ -223,7 +225,7 @@ async function loadDashboard() {
     const plansResult = await planApi.getPlans()
     if (plansResult && plansResult.code === 200) {
       plans.value = plansResult.data || []
-      const activePlans = plans.value.filter(p => p.status === '进行中')
+      const activePlans = plans.value.filter(p => p.status === t('plan.inProgress'))
       stats.value.activePlans = activePlans.length
 
       // 加载今日任务
@@ -234,7 +236,7 @@ async function loadDashboard() {
     }
   } catch (error) {
     console.error('加载仪表盘失败:', error)
-    showToast('加载数据失败', 'error')
+    showToast(t('dashboard.loadDataFailed'), 'error')
   } finally {
     loading.value = false
   }
@@ -253,7 +255,7 @@ async function loadTodayTask(planId) {
 
 async function quickCheckIn() {
   if (!todayTask.value || !currentPlanId.value) {
-    showToast('没有可打卡的任务', 'warning')
+    showToast(t('dashboard.noTaskToCheckIn'), 'warning')
     return
   }
 
@@ -265,14 +267,14 @@ async function quickCheckIn() {
     })
 
     if (result && result.code === 200) {
-      showToast(`打卡成功！今日学习${todayTask.value.duration}小时，继续加油！🎉`, 'success')
+      showToast(t('dashboard.checkInSuccess', { hours: todayTask.value.duration }), 'success')
       loadDashboard()
     } else {
-      showToast(result?.message || '打卡失败', 'error')
+      showToast(result?.message || t('dashboard.checkInFailed'), 'error')
     }
   } catch (error) {
     console.error('打卡失败:', error)
-    showToast('打卡失败', 'error')
+    showToast(t('dashboard.checkInFailed'), 'error')
   }
 }
 </script>

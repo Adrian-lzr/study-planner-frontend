@@ -12,14 +12,14 @@
                   type="text" 
                   class="form-control"
                   v-model="keyword"
-                  placeholder="搜索问题、用户、话题..."
+                  :placeholder="$t('forum.search.placeholder')"
                   @keyup.enter="performSearch"
                 >
                 <button 
                   class="btn btn-primary"
                   @click="performSearch"
                 >
-                  <i class="bi bi-search"></i> 搜索
+                  <i class="bi bi-search"></i> {{ $t('forum.search.search') }}
                 </button>
               </div>
             </div>
@@ -33,28 +33,28 @@
                 :class="{ active: searchType === 'all' }"
                 @click="changeType('all')"
               >
-                全部
+                {{ $t('forum.search.all') }}
               </button>
               <button 
                 class="btn btn-sm btn-outline-secondary"
                 :class="{ active: searchType === 'question' }"
                 @click="changeType('question')"
               >
-                问题
+                {{ $t('forum.search.question') }}
               </button>
               <button 
                 class="btn btn-sm btn-outline-secondary"
                 :class="{ active: searchType === 'user' }"
                 @click="changeType('user')"
               >
-                用户
+                {{ $t('forum.search.user') }}
               </button>
               <button 
                 class="btn btn-sm btn-outline-secondary"
                 :class="{ active: searchType === 'topic' }"
                 @click="changeType('topic')"
               >
-                话题
+                {{ $t('forum.search.topic') }}
               </button>
             </div>
             <div class="btn-group" role="group">
@@ -63,14 +63,14 @@
                 :class="{ active: sortBy === 'relevance' }"
                 @click="changeSort('relevance')"
               >
-                相关度
+                {{ $t('forum.search.relevance') }}
               </button>
               <button 
                 class="btn btn-sm btn-outline-secondary"
                 :class="{ active: sortBy === 'time' }"
                 @click="changeSort('time')"
               >
-                时间
+                {{ $t('forum.search.time') }}
               </button>
             </div>
           </div>
@@ -83,13 +83,13 @@
           </div>
 
           <div v-else-if="!hasSearched" class="text-center py-5 text-muted">
-            请输入关键词进行搜索
+            {{ $t('forum.search.enterKeyword') }}
           </div>
 
           <div v-else-if="hasResults">
             <!-- 问题结果 -->
             <div v-if="(searchType === 'all' || searchType === 'question') && results.questions?.length > 0">
-              <h5 class="mb-3">问题 ({{ results.questions.length }})</h5>
+              <h5 class="mb-3">{{ $t('forum.search.questions', { count: results.questions.length }) }}</h5>
               <QuestionCard 
                 v-for="question in results.questions" 
                 :key="question.id"
@@ -99,7 +99,7 @@
 
             <!-- 用户结果 -->
             <div v-if="(searchType === 'all' || searchType === 'user') && results.users?.length > 0" class="mt-4">
-              <h5 class="mb-3">用户 ({{ results.users.length }})</h5>
+              <h5 class="mb-3">{{ $t('forum.search.users', { count: results.users.length }) }}</h5>
               <div 
                 v-for="user in results.users" 
                 :key="user.id"
@@ -132,7 +132,7 @@
 
             <!-- 话题结果 -->
             <div v-if="(searchType === 'all' || searchType === 'topic') && results.topics?.length > 0" class="mt-4">
-              <h5 class="mb-3">话题 ({{ results.topics.length }})</h5>
+              <h5 class="mb-3">{{ $t('forum.search.topics', { count: results.topics.length }) }}</h5>
               <div 
                 v-for="topic in results.topics" 
                 :key="topic.id"
@@ -149,7 +149,7 @@
                     {{ topic.description }}
                   </p>
                   <div class="text-muted small mt-2">
-                    {{ topic.follow_count || 0 }} 关注 · {{ topic.question_count || 0 }} 问题
+                    {{ topic.follow_count || 0 }} {{ $t('forum.topic.followers') }} · {{ topic.question_count || 0 }} {{ $t('forum.topic.questions') }}
                   </div>
                 </div>
               </div>
@@ -157,7 +157,7 @@
           </div>
 
           <div v-else class="text-center py-5 text-muted">
-            没有找到相关结果
+            {{ $t('forum.search.noResults') }}
           </div>
         </div>
       </div>
@@ -168,12 +168,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import Footer from '../../components/Footer.vue'
 import { useForumStore } from '../../stores/forum'
 import QuestionCard from '../../components/Forum/QuestionCard.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const forumStore = useForumStore()
 

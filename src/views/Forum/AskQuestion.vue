@@ -6,33 +6,33 @@
         <div class="col-lg-8">
           <div class="card">
             <div class="card-header">
-              <h4 class="mb-0">提问</h4>
+              <h4 class="mb-0">{{ $t('forum.askQuestion.title') }}</h4>
             </div>
             <div class="card-body">
               <form @submit.prevent="submitQuestion">
                 <!-- 标题 -->
                 <div class="mb-3">
-                  <label for="title" class="form-label">问题标题</label>
+                  <label for="title" class="form-label">{{ $t('forum.askQuestion.questionTitle') }}</label>
                   <input 
                     type="text" 
                     class="form-control" 
                     id="title"
                     v-model="form.title"
-                    placeholder="请输入问题标题"
+                    :placeholder="$t('forum.askQuestion.titlePlaceholder')"
                     required
                   >
                 </div>
 
                 <!-- 问题描述 -->
                 <div class="mb-3">
-                  <label for="content" class="form-label">问题描述</label>
+                  <label for="content" class="form-label">{{ $t('forum.askQuestion.questionContent') }}</label>
                   <div class="d-flex gap-2 mb-2">
                     <button 
                       type="button"
                       class="btn btn-sm btn-outline-secondary"
                       @click="showPreview = !showPreview"
                     >
-                      {{ showPreview ? '编辑' : '预览' }}
+                      {{ showPreview ? $t('common.edit') : $t('common.preview') }}
                     </button>
                   </div>
                   <textarea 
@@ -40,7 +40,7 @@
                     id="content"
                     rows="12"
                     v-model="form.content"
-                    placeholder="详细描述你的问题（支持 Markdown）..."
+                    :placeholder="$t('forum.askQuestion.contentPlaceholder')"
                     v-if="!showPreview"
                   ></textarea>
                   <div 
@@ -53,7 +53,7 @@
 
                 <!-- 话题/标签 -->
                 <div class="mb-3">
-                  <label class="form-label">选择话题</label>
+                  <label class="form-label">{{ $t('forum.askQuestion.selectTopics') }}</label>
                   <div class="d-flex flex-wrap gap-2 mb-2" v-if="selectedTopics.length > 0">
                     <span 
                       v-for="topic in selectedTopics" 
@@ -73,14 +73,14 @@
                     </span>
                   </div>
                   <div v-else class="text-muted small mb-2">
-                    <i class="bi bi-info-circle"></i> 暂未选择话题，可从下方热门话题中选择或手动添加
+                    <i class="bi bi-info-circle"></i> {{ $t('forum.askQuestion.noTopicsSelected') }}
                   </div>
                   <div class="input-group">
                     <input 
                       type="text" 
                       class="form-control"
                       v-model="topicInput"
-                      placeholder="输入话题名称，按回车添加"
+                      :placeholder="$t('forum.askQuestion.topicInputPlaceholder')"
                       @keyup.enter="addTopic"
                     >
                     <button 
@@ -88,11 +88,11 @@
                       class="btn btn-outline-secondary"
                       @click="addTopic"
                     >
-                      添加
+                      {{ $t('forum.askQuestion.add') }}
                     </button>
                   </div>
                   <div class="mt-2">
-                    <small class="text-muted">热门话题（点击选择）：</small>
+                    <small class="text-muted">{{ $t('forum.askQuestion.hotTopics') }}</small>
                     <div class="d-flex flex-wrap gap-1 mt-1">
                       <button 
                         type="button"
@@ -121,7 +121,7 @@
                     v-model="form.anonymous"
                   >
                   <label class="form-check-label" for="anonymous">
-                    匿名提问
+                    {{ $t('forum.askQuestion.anonymous') }}
                   </label>
                 </div>
 
@@ -132,7 +132,7 @@
                     class="btn btn-outline-secondary"
                     @click="saveDraft"
                   >
-                    保存草稿
+                    {{ $t('common.saveDraft') }}
                   </button>
                   <div>
                     <button 
@@ -140,14 +140,14 @@
                       class="btn btn-outline-secondary me-2"
                       @click="$router.back()"
                     >
-                      取消
+                      {{ $t('common.cancel') }}
                     </button>
                     <button 
                       type="submit"
                       class="btn btn-primary"
                       :disabled="!form.title.trim() || submitting"
                     >
-                      {{ submitting ? '发布中...' : '发布问题' }}
+                      {{ submitting ? $t('forum.askQuestion.submitting') : $t('forum.askQuestion.submit') }}
                     </button>
                   </div>
                 </div>
@@ -163,6 +163,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import Navbar from '../../components/Navbar.vue'
 import Footer from '../../components/Footer.vue'
@@ -171,6 +172,7 @@ import { useForumStore } from '../../stores/forum'
 import { showToast } from '../../utils/toast'
 import { topicApi } from '../../api/forum'
 
+const { t } = useI18n()
 const router = useRouter()
 const forumStore = useForumStore()
 
@@ -206,18 +208,18 @@ function selectTopic(topic) {
   if (existing) {
     // 如果已选择，则取消选择
     removeTopic(topic.id)
-    showToast(`已取消选择话题：${topic.name}`, 'info')
+    showToast(t('forum.askQuestion.topicUnselected') + `: ${topic.name}`, 'info')
   } else {
     // 如果未选择，则添加
     selectedTopics.value.push(topic)
-    showToast(`已选择话题：${topic.name}`, 'success')
+    showToast(t('forum.askQuestion.topicSelected') + `: ${topic.name}`, 'success')
   }
 }
 
 async function addTopic() {
   const name = topicInput.value.trim()
   if (!name) {
-    showToast('请输入话题名称', 'warning')
+    showToast(t('forum.askQuestion.pleaseEnterTopicName'), 'warning')
     return
   }
   
@@ -236,9 +238,9 @@ async function addTopic() {
       const existing = selectedTopics.value.find(t => t.id === response.data.id)
       if (!existing) {
         selectedTopics.value.push(response.data)
-        showToast(`话题"${name}"添加成功`, 'success')
+        showToast(t('common.success'), 'success')
       } else {
-        showToast('该话题已添加', 'warning')
+        showToast(t('forum.askQuestion.topicAlreadyAdded'), 'warning')
       }
       topicInput.value = ''
       // 刷新热门话题列表
@@ -263,7 +265,7 @@ async function addTopic() {
         showToast(errorMsg, 'error')
       }
     } else {
-      showToast('添加话题失败：' + (error.message || '网络错误'), 'error')
+      showToast(t('forum.askQuestion.addTopicFailed') + ': ' + (error.message || t('errors.network')), 'error')
     }
   }
 }
@@ -272,7 +274,7 @@ function removeTopic(topicId) {
   const topic = selectedTopics.value.find(t => t.id === topicId)
   selectedTopics.value = selectedTopics.value.filter(t => t.id !== topicId)
   if (topic) {
-    showToast(`已移除话题：${topic.name}`, 'info')
+    showToast(t('forum.askQuestion.topicRemoved') + `: ${topic.name}`, 'info')
   }
 }
 
@@ -284,7 +286,7 @@ function saveDraft() {
     anonymous: form.value.anonymous
   }
   localStorage.setItem('question_draft', JSON.stringify(draft))
-  showToast('草稿已保存', 'success')
+  showToast(t('forum.askQuestion.draftSaved'), 'success')
 }
 
 function loadDraft() {
@@ -304,7 +306,7 @@ function loadDraft() {
 
 async function submitQuestion() {
   if (!form.value.title.trim()) {
-    showToast('请输入问题标题', 'warning')
+    showToast(t('forum.askQuestion.pleaseEnterTitle'), 'warning')
     return
   }
   
@@ -320,7 +322,7 @@ async function submitQuestion() {
     if (result) {
       // 清除草稿
       localStorage.removeItem('question_draft')
-      showToast('问题发布成功', 'success')
+      showToast(t('forum.askQuestion.questionPublished'), 'success')
       // 跳转到问题详情页
       router.push(`/forum/question/${result.id}`).then(() => {
         // 触发论坛首页刷新（通过事件或直接调用）

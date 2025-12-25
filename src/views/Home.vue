@@ -7,24 +7,24 @@
       <!-- Hero Section -->
       <section class="text-center py-5">
         <h1 class="display-4 fw-bold text-primary">
-          <i class="bi bi-lightbulb"></i> 智能学习计划生成器
+          <i class="bi bi-lightbulb"></i> {{ $t('home.title') }}
         </h1>
         <p class="lead text-muted">
-          让AI为你定制专属学习计划，轻松打卡，高效学习
+          {{ $t('home.subtitle') }}
         </p>
         <div class="mt-4">
           <router-link to="/create-plan" class="btn btn-primary btn-lg me-2">
-            <i class="bi bi-plus-circle"></i> 立即创建计划
+            <i class="bi bi-plus-circle"></i> {{ $t('home.createPlan') }}
           </router-link>
           <router-link v-if="!isLoggedIn" to="/login" class="btn btn-outline-primary btn-lg">
-            <i class="bi bi-person"></i> 登录/注册
+            <i class="bi bi-person"></i> {{ $t('home.loginRegister') }}
           </router-link>
         </div>
       </section>
 
       <!-- 功能介绍 -->
       <section class="py-5">
-        <h2 class="text-center mb-5">核心功能</h2>
+        <h2 class="text-center mb-5">{{ $t('home.features') }}</h2>
         <div class="row g-4">
           <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
@@ -35,9 +35,9 @@
                 >
                   <i class="bi bi-robot fs-4"></i>
                 </div>
-                <h5 class="card-title">AI智能生成</h5>
+                <h5 class="card-title">{{ $t('home.aiGenerate') }}</h5>
                 <p class="card-text text-muted">
-                  基于大语言模型，根据你的目标和时间，自动生成个性化学习计划
+                  {{ $t('home.aiGenerateDesc') }}
                 </p>
               </div>
             </div>
@@ -51,9 +51,9 @@
                 >
                   <i class="bi bi-calendar-check fs-4"></i>
                 </div>
-                <h5 class="card-title">每日打卡</h5>
+                <h5 class="card-title">{{ $t('home.dailyCheckIn') }}</h5>
                 <p class="card-text text-muted">
-                  轻松打卡记录学习进度，查看连续打卡天数，培养学习习惯
+                  {{ $t('home.dailyCheckInDesc') }}
                 </p>
               </div>
             </div>
@@ -67,9 +67,9 @@
                 >
                   <i class="bi bi-graph-up fs-4"></i>
                 </div>
-                <h5 class="card-title">学习统计</h5>
+                <h5 class="card-title">{{ $t('home.studyStats') }}</h5>
                 <p class="card-text text-muted">
-                  可视化展示学习数据，日历热力图，进度追踪一目了然
+                  {{ $t('home.studyStatsDesc') }}
                 </p>
               </div>
             </div>
@@ -79,7 +79,7 @@
 
       <!-- 使用流程 -->
       <section class="py-5 bg-light rounded-3">
-        <h2 class="text-center mb-5">使用流程</h2>
+        <h2 class="text-center mb-5">{{ $t('home.usageFlow') }}</h2>
         <div class="row justify-content-center">
           <div class="col-md-10">
             <div class="row g-4">
@@ -90,8 +90,8 @@
                 >
                   1
                 </div>
-                <h6>设定目标</h6>
-                <p class="small text-muted">输入你想学习的内容和可用时间</p>
+                <h6>{{ $t('home.step1') }}</h6>
+                <p class="small text-muted">{{ $t('home.step1Desc') }}</p>
               </div>
               <div class="col-md-3 text-center">
                 <div
@@ -100,8 +100,8 @@
                 >
                   2
                 </div>
-                <h6>AI生成计划</h6>
-                <p class="small text-muted">智能生成详细的每日学习任务</p>
+                <h6>{{ $t('home.step2') }}</h6>
+                <p class="small text-muted">{{ $t('home.step2Desc') }}</p>
               </div>
               <div class="col-md-3 text-center">
                 <div
@@ -110,8 +110,8 @@
                 >
                   3
                 </div>
-                <h6>每日打卡</h6>
-                <p class="small text-muted">完成学习后打卡记录</p>
+                <h6>{{ $t('home.step3') }}</h6>
+                <p class="small text-muted">{{ $t('home.step3Desc') }}</p>
               </div>
               <div class="col-md-3 text-center">
                 <div
@@ -120,8 +120,8 @@
                 >
                   4
                 </div>
-                <h6>查看成果</h6>
-                <p class="small text-muted">统计数据见证你的进步</p>
+                <h6>{{ $t('home.step4') }}</h6>
+                <p class="small text-muted">{{ $t('home.step4Desc') }}</p>
               </div>
             </div>
           </div>
@@ -135,10 +135,12 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
 import { useUserStore } from '../stores/user'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 </script>

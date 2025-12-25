@@ -3,8 +3,8 @@
     <div class="avatar-cropper-container">
       <!-- 头部 -->
       <div class="avatar-cropper-header">
-        <h5 class="mb-0">裁剪头像</h5>
-        <button type="button" class="btn-close" @click="cancel" aria-label="关闭">
+        <h5 class="mb-0">{{ $t('profile.cropAvatar') }}</h5>
+        <button type="button" class="btn-close" @click="cancel" :aria-label="$t('common.close')">
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
@@ -65,7 +65,7 @@
 
           <!-- 实时预览 -->
           <div class="cropper-preview-section">
-            <div class="preview-label">预览</div>
+            <div class="preview-label">{{ $t('common.preview') }}</div>
             <div class="preview-box">
               <canvas ref="previewCanvas" class="preview-canvas"></canvas>
             </div>
@@ -79,7 +79,7 @@
               class="btn btn-sm btn-outline-secondary" 
               @click="zoomOut"
               :disabled="scale <= minScale"
-              title="缩小"
+              :title="$t('profile.zoomOut')"
             >
               <i class="bi bi-dash-lg"></i>
             </button>
@@ -96,14 +96,14 @@
               class="btn btn-sm btn-outline-secondary" 
               @click="zoomIn"
               :disabled="scale >= maxScale"
-              title="放大"
+              :title="$t('profile.zoomIn')"
             >
               <i class="bi bi-plus-lg"></i>
             </button>
           </div>
           <div class="control-buttons">
-            <button class="btn btn-secondary" @click="cancel">取消</button>
-            <button class="btn btn-primary" @click="confirm">确认裁剪</button>
+            <button class="btn btn-secondary" @click="cancel">{{ $t('common.cancel') }}</button>
+            <button class="btn btn-primary" @click="confirm">{{ $t('profile.confirmCrop') }}</button>
           </div>
         </div>
       </div>
@@ -113,6 +113,9 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   show: {

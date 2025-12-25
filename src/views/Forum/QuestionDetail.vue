@@ -8,7 +8,7 @@
           <!-- 加载状态 -->
           <div v-if="forumStore.loading && !question" class="text-center py-5">
             <div class="spinner-border" role="status">
-              <span class="visually-hidden">加载中...</span>
+              <span class="visually-hidden">{{ $t('common.loading') }}</span>
             </div>
           </div>
 
@@ -36,24 +36,44 @@
                     style="width: 32px; height: 32px;"
                     alt="avatar"
                   >
-                  <div>
+                  <div class="d-flex align-items-center gap-2">
                     <router-link 
                       :to="`/forum/user/${question.author?.id}`"
                       class="text-decoration-none"
                     >
-                      {{ question.author?.username || '匿名用户' }}
+                      {{ question.author?.username || $t('forum.questionCard.anonymousUser') }}
                     </router-link>
                     <span class="ms-2">{{ formatTime(question.created_at) }}</span>
+                    <button 
+                      v-if="userStore.isLoggedIn && question.author && question.author.id !== userStore.user?.id"
+                      class="btn btn-sm"
+                      :class="question.author.is_following ? 'btn-primary' : 'btn-outline-primary'"
+                      @click="handleFollowAuthor"
+                      :disabled="followingAuthor"
+                    >
+                      <i class="bi" :class="question.author.is_following ? 'bi-person-check-fill' : 'bi-person-plus'"></i>
+                      <span class="ms-1">{{ question.author.is_following ? $t('forum.userProfile.followed') : $t('forum.userProfile.follow') }}</span>
+                    </button>
                   </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                   <button 
                     class="btn btn-sm"
-                    :class="question.is_followed ? 'btn-primary' : 'btn-outline-primary'"
-                    @click="handleFollow"
+                    :class="question.is_favorited ? 'btn-warning' : 'btn-outline-warning'"
+                    @click="handleFavorite"
+                    :disabled="favoriting"
                   >
-                    <i class="bi" :class="question.is_followed ? 'bi-heart-fill' : 'bi-heart'"></i>
-                    <span class="ms-1">{{ question.follow_count || 0 }}</span>
+                    <i class="bi" :class="question.is_favorited ? 'bi-star-fill' : 'bi-star'"></i>
+                    <span class="ms-1">{{ question.favorite_count || 0 }}</span>
+                  </button>
+                  <button 
+                    class="btn btn-sm"
+                    :class="question.is_voted ? 'btn-primary' : 'btn-outline-primary'"
+                    @click="handleVoteQuestion"
+                    :disabled="votingQuestion"
+                  >
+                    <i class="bi" :class="question.is_voted ? 'bi-heart-fill' : 'bi-heart'"></i>
+                    <span class="ms-1">{{ question.vote_count || 0 }}</span>
                   </button>
                   <button class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-share"></i>
@@ -66,40 +86,40 @@
           <!-- 回答列表 -->
           <div class="mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5>{{ answerCount }} 个回答</h5>
+              <h5>{{ $t('forum.answer.count', { count: answerCount }) }}</h5>
               <div class="btn-group" role="group">
                 <button 
                   class="btn btn-sm btn-outline-secondary"
                   :class="{ active: sortBy === 'default' }"
                   @click="changeSort('default')"
                 >
-                  默认排序
+                  {{ $t('forum.answer.sortDefault') }}
                 </button>
                 <button 
                   class="btn btn-sm btn-outline-secondary"
                   :class="{ active: sortBy === 'time' }"
                   @click="changeSort('time')"
                 >
-                  时间排序
+                  {{ $t('forum.answer.sortTime') }}
                 </button>
                 <button 
                   class="btn btn-sm btn-outline-secondary"
                   :class="{ active: sortBy === 'vote' }"
                   @click="changeSort('vote')"
                 >
-                  点赞排序
+                  {{ $t('forum.answer.sortVote') }}
                 </button>
               </div>
             </div>
 
             <div v-if="answersLoading" class="text-center py-3">
               <div class="spinner-border spinner-border-sm" role="status">
-                <span class="visually-hidden">加载中...</span>
+                <span class="visually-hidden">{{ $t('common.loading') }}</span>
               </div>
             </div>
 
             <div v-else-if="forumStore.answers.length === 0" class="text-center py-5 text-muted">
-              暂无回答，成为第一个回答者吧！
+              {{ $t('forum.answer.noAnswers') }}
             </div>
 
             <AnswerCard 
@@ -117,7 +137,7 @@
           <!-- 回答编辑区 -->
           <div class="card" v-if="userStore.isLoggedIn">
             <div class="card-header">
-              <h6 class="mb-0">写下你的回答</h6>
+              <h6 class="mb-0">{{ $t('forum.answer.submit') }}</h6>
             </div>
             <div class="card-body">
               <div class="mb-3">
@@ -125,19 +145,19 @@
                   class="form-control" 
                   rows="8"
                   v-model="answerContent"
-                  placeholder="输入你的回答（支持 Markdown）..."
+                  :placeholder="$t('forum.answer.content') + ' (支持 Markdown)...'"
                 ></textarea>
               </div>
               <div class="d-flex justify-content-between">
                 <div>
                   <button class="btn btn-sm btn-outline-secondary" @click="showPreview = !showPreview">
-                    {{ showPreview ? '编辑' : '预览' }}
+                    {{ showPreview ? $t('common.edit') : $t('common.preview') }}
                   </button>
                 </div>
                 <div>
-                  <button class="btn btn-outline-secondary me-2" @click="saveDraft">保存草稿</button>
+                  <button class="btn btn-outline-secondary me-2" @click="saveDraft">{{ $t('common.saveDraft') }}</button>
                   <button class="btn btn-primary" @click="submitAnswer" :disabled="!answerContent.trim() || submitting">
-                    {{ submitting ? '发布中...' : '发布回答' }}
+                    {{ submitting ? $t('common.submitting') : $t('forum.answer.submit') }}
                   </button>
                 </div>
               </div>
@@ -151,8 +171,8 @@
 
           <div v-else class="card">
             <div class="card-body text-center">
-              <p class="text-muted">请先登录后再回答问题</p>
-              <router-link to="/login" class="btn btn-primary">登录</router-link>
+              <p class="text-muted">{{ $t('auth.loginRequired') }}</p>
+              <router-link to="/login" class="btn btn-primary">{{ $t('nav.login') }}</router-link>
             </div>
           </div>
         </div>
@@ -163,11 +183,11 @@
             <!-- 相关问题 -->
             <div class="card mb-3">
               <div class="card-header">
-                <h6 class="mb-0">相关问题</h6>
+                <h6 class="mb-0">{{ $t('forum.relatedQuestions') }}</h6>
               </div>
               <div class="card-body">
                 <div v-if="relatedQuestions.length === 0" class="text-muted small">
-                  暂无相关问题
+                  {{ $t('forum.relatedQuestions.empty') }}
                 </div>
                 <div v-else>
                   <div 
@@ -196,6 +216,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import Navbar from '../../components/Navbar.vue'
 import Footer from '../../components/Footer.vue'
 import { renderMarkdown } from '../../utils/markdown'
@@ -206,6 +227,7 @@ import { showToast } from '../../utils/toast'
 import TopicTag from '../../components/Forum/TopicTag.vue'
 import AnswerCard from '../../components/Forum/AnswerCard.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const forumStore = useForumStore()
@@ -219,6 +241,10 @@ const answerContent = ref('')
 const showPreview = ref(false)
 const submitting = ref(false)
 const relatedQuestions = ref([])
+const following = ref(false)
+const favoriting = ref(false)
+const followingAuthor = ref(false)
+const votingQuestion = ref(false)
 
 const renderedContent = computed(() => {
   if (!question.value?.content) return ''
@@ -275,12 +301,69 @@ function changeSort(sort) {
   loadAnswers()
 }
 
+async function handleFavorite() {
+  if (!userStore.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  if (favoriting.value) return
+  favoriting.value = true
+  try {
+    await forumStore.favoriteQuestion(question.value.id)
+  } finally {
+    favoriting.value = false
+  }
+}
+
 async function handleFollow() {
   if (!userStore.isLoggedIn) {
     router.push('/login')
     return
   }
-  await forumStore.followQuestion(question.value.id)
+  if (following.value) return
+  following.value = true
+  try {
+    await forumStore.followQuestion(question.value.id)
+  } finally {
+    following.value = false
+  }
+}
+
+async function handleVoteQuestion() {
+  if (!userStore.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  if (votingQuestion.value || !question.value) return
+  votingQuestion.value = true
+  try {
+    const result = await forumStore.voteQuestion(question.value.id)
+    if (result && question.value) {
+      question.value.is_voted = result.is_voted !== undefined ? result.is_voted : !question.value.is_voted
+      question.value.vote_count = result.vote_count !== undefined ? result.vote_count : question.value.vote_count
+    }
+  } catch (error) {
+    console.error('点赞失败:', error)
+    showToast(t('errors.unknown'), 'error')
+  } finally {
+    votingQuestion.value = false
+  }
+}
+
+async function handleFollowAuthor() {
+  if (!userStore.isLoggedIn || !question.value?.author) {
+    return
+  }
+  if (followingAuthor.value) return
+  followingAuthor.value = true
+  try {
+    const result = await forumStore.followUser(question.value.author.id)
+    if (result && question.value.author) {
+      question.value.author.is_following = result.is_following
+    }
+  } finally {
+    followingAuthor.value = false
+  }
 }
 
 async function handleVote(answerId) {
@@ -288,7 +371,13 @@ async function handleVote(answerId) {
     router.push('/login')
     return
   }
-  return await forumStore.voteAnswer(answerId)
+  try {
+    const result = await forumStore.voteAnswer(answerId)
+    return result
+  } catch (error) {
+    console.error('点赞失败:', error)
+    return null
+  }
 }
 
 async function handleCollect(answerId) {
@@ -306,22 +395,22 @@ function handleEditAnswer(answer) {
 }
 
 async function handleDeleteAnswer(answerId) {
-  if (!confirm('确定要删除这条回答吗？')) return
+  if (!confirm(t('forum.answer.confirmDelete'))) return
   
   try {
     const { answerApi } = await import('../../api/forum')
     const response = await answerApi.deleteAnswer(answerId)
     if (response.code === 200) {
-      showToast('删除成功', 'success')
+      showToast(t('common.success'), 'success')
       // 重新加载回答列表和问题详情（更新回答数）
       await loadAnswers()
       await loadQuestion()
     } else {
-      showToast(response.message || '删除失败', 'error')
+      showToast(response.message || t('errors.unknown'), 'error')
     }
   } catch (error) {
     console.error('删除失败:', error)
-    showToast('删除失败', 'error')
+    showToast(t('errors.unknown'), 'error')
   }
 }
 
@@ -351,7 +440,7 @@ async function submitAnswer() {
 
 function saveDraft() {
   localStorage.setItem(`draft_answer_${question.value.id}`, answerContent.value)
-  showToast('草稿已保存', 'success')
+  showToast(t('common.saveDraft') + ' ' + t('common.success'), 'success')
 }
 </script>
 
